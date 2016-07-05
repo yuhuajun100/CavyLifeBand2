@@ -71,7 +71,13 @@ class HomeUpperView: UIView, UserInfoRealmOperateDelegate, ChartsRealmProtocol {
             switch change {
             case .Update(_, deletions: _, insertions: _, modifications: _):
                 self.configStepValue()
-                NSNotificationCenter.defaultCenter().postNotificationName(NumberFollowUpper.FollowUpperStep.rawValue, object: nil)
+                
+                let time = NSDate()
+                let resultStep = self.queryStepNumber(time.gregorian.beginningOfDay.date, endTime: time, timeBucket: .Day)
+                
+                let stepCurrentNumber = resultStep.totalStep
+                
+                NSNotificationCenter.defaultCenter().postNotificationName(NumberFollowUpper.FollowUpperStep.rawValue, object: ["stepCurrentNumber": stepCurrentNumber])
 
             default:
                 break
@@ -83,7 +89,7 @@ class HomeUpperView: UIView, UserInfoRealmOperateDelegate, ChartsRealmProtocol {
             switch change {
             case .Update(_, deletions: _, insertions: _, modifications: _):
                 self.configSleepValue()
-                NSNotificationCenter.defaultCenter().postNotificationName(NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
+//                NSNotificationCenter.defaultCenter().postNotificationName(NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
 
             default:
                 break

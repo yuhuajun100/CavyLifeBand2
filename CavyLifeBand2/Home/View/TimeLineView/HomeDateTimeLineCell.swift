@@ -34,7 +34,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
         
         // 跟随上面的环的数值再变化一下
         // 接收通知
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(changeStepNumber), name: NumberFollowUpper.FollowUpperStep.rawValue, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(changeStepNumber(_:)), name: NumberFollowUpper.FollowUpperStep.rawValue, object: nil)
         
 //        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(changeSleepNumber), name: NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
     }
@@ -334,17 +334,23 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
     /**
      接受通知更新计步值
      */
-    func changeStepNumber() {
+    
+    //TODO: 等待修复
+    func changeStepNumber(notifica: NSNotification) {
         
-        guard let curDate = NSDate(fromString: timeString, format: "yyyy.M.d") else {
-            fatalError("时间格式不正确\(timeString)")
-        }
+//      let stepNumber = notifica.object as? Dictionary
         
-        let endDate = curDate.gregorian.isToday ? NSDate() : (curDate.gregorian.beginningOfDay + 24.hour).date
-        
-        self.datasViewModels[0] = HomeListStepViewModel(stepNumber: self.queryStepNumber(curDate, endTime: endDate, timeBucket: TimeBucketStyle.Day).totalStep)
-        
-        self.tableView.reloadData()
+        self.datasViewModels[0] = HomeListStepViewModel(stepNumber: 0)
+//        ["stepCurrentNumber"]
+//        guard let curDate = NSDate(fromString: timeString, format: "yyyy.M.d") else {
+//            fatalError("时间格式不正确\(timeString)")
+//        }
+//        
+//        let endDate = curDate.gregorian.isToday ? NSDate() : (curDate.gregorian.beginningOfDay + 24.hour).date
+//        
+//        self.datasViewModels[0] = HomeListStepViewModel(stepNumber: self.queryStepNumber(curDate, endTime: endDate, timeBucket: TimeBucketStyle.Day).totalStep)
+//        
+//        self.tableView.reloadData()
     }
     
     /**

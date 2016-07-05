@@ -122,7 +122,7 @@ extension RootViewController: ChartsRealmProtocol {
      保存睡眠翻身次数到数据库
      
      - author: sim cai
-     - date: 2016-05-31
+     - date: 2016-05-31   
      
      - parameter sleeps:
      */
@@ -133,15 +133,10 @@ extension RootViewController: ChartsRealmProtocol {
             
             if i == 0 {
                 
-                
                 let lastRealmTime = self.queryAllSleepInfo(userId).last?.time
                 
                 // 数据库无数据 直接添加
-                if lastRealmTime == nil {
-                    
-                    self.addSleepData(ChartSleepDataRealm(time: sleeps[i].0, tilts: sleeps[i].1))
-                    
-                } else if sleeps[0].0.compare(lastRealmTime!) == .OrderedSame {
+                if lastRealmTime != nil && sleeps[0].0.compare(lastRealmTime!) == .OrderedSame {
                     
                     // 比对最后一条数据的时间
                     
@@ -150,11 +145,7 @@ extension RootViewController: ChartsRealmProtocol {
                 }
                 
             }
-            
-            //            if sleeps[i].1 == 0 {
-            //                continue
-            //            }
-            
+   
             self.addSleepData(ChartSleepDataRealm(time: sleeps[i].0, tilts: sleeps[i].1))
             
         }
