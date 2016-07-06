@@ -408,6 +408,23 @@ extension ChartsRealmProtocol {
     /**
      查询有效睡眠信息
      
+     睡眠状态的判定
+     条件1：之前20分钟tilt总量+当前10分钟tilt总量 +之后20分钟tilt总量<40
+     条件2：当前10分钟tilt<15
+     条件3：当前10分钟step<30
+     条件4：昨天18：00点到今天18：00
+     满足 条件1 and 条件2 and 条件3 and 条件4，则当前10分钟为睡眠状态
+     总睡眠时长计为S
+     
+     深睡与浅睡状态的判定
+     在S中，tilt and step=0的总时长计为d
+     d*0.9=深睡时长
+     S-d*0.9=浅睡时长
+     
+     无睡眠状态的判定
+     条件：tilt and step=0的时间连续大于2小时，则将连续的tilt and step=0的时间判定为无睡眠状态
+     
+     
      - author: sim cai
      - date: 2016-05-31
      
@@ -443,7 +460,9 @@ extension ChartsRealmProtocol {
             
             var tiltsTotal = sleepDatas[beginIndex...endIndex].reduce(0, combine: +)
             
-            // 条件1：之前20分钟tilt数量+当前20分钟tilt +之后20分钟tilt数量<40
+            Log.info("======\(sleepDatas[beginIndex...endIndex].count)========")
+            
+            // 条件1：之前20分钟tilt数量+当前10分钟tilt +之后20分钟tilt数量<40
             if tiltsTotal >= 40 {
                 longSleepCount = 0
                 continue
@@ -465,6 +484,7 @@ extension ChartsRealmProtocol {
                 continue
             }
             
+            
             // 退出无睡眠状态,减掉无效计数
             if stepTotal != 0 || tiltsTotal != 0 {
                 
@@ -480,7 +500,7 @@ extension ChartsRealmProtocol {
             
             //            Log.info("\(timeIndex)----\((beginTime.gregorian + (timeIndex * 10).minute).date.toString(format: "MM-dd HH:mm"))----\(stepDatas[timeIndex])----\(sleepDatas[timeIndex])")
             
-            // 无数据计数
+            // 无数据计数 tilt and step=0的时间连续大于2小时，则将连续的tilt and step=0的时间判定为无睡眠状态
             if stepTotal == 0 && tiltsTotal == 0 {
                 longSleepCount += 1
             }
@@ -506,6 +526,8 @@ extension ChartsRealmProtocol {
      
      - parameter beginTime: 开始时间
      - parameter endTime:   结束时间
+     
+     
      
      - returns: 深度睡眠值  10分钟为单位， 1 = 10 分钟
      */

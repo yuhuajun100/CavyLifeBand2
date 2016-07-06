@@ -100,7 +100,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
             fatalError("时间格式不正确\(timeString)")
         }
         
-        let endDate = curDate.gregorian.isToday ? NSDate() : (curDate.gregorian.beginningOfDay + 24.hour).date
+        let endDate = curDate.gregorian.isToday ? NSDate() : (curDate.gregorian.beginningOfDay + 18.hour).date
         
         Log.info("\(curDate.toString(format: "yyyy.M.d HH:mm:ss")) -------- \(endDate.toString(format: "yyyy.M.d HH:mm:ss"))")
         
@@ -334,13 +334,12 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
     /**
      接受通知更新计步值
      */
-    
-    //TODO: 等待修复
+   
     func changeStepNumber(notifica: NSNotification) {
         
-//      let stepNumber = notifica.object as? Dictionary
+      let stepNumber = notifica.object?.valueForKey("stepCurrentNumber") as? Int ?? 0
         
-        self.datasViewModels[0] = HomeListStepViewModel(stepNumber: 0)
+        self.datasViewModels[0] = HomeListStepViewModel(stepNumber: stepNumber)
 //        ["stepCurrentNumber"]
 //        guard let curDate = NSDate(fromString: timeString, format: "yyyy.M.d") else {
 //            fatalError("时间格式不正确\(timeString)")
