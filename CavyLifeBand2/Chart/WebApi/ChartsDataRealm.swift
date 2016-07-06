@@ -434,9 +434,10 @@ extension ChartsRealmProtocol {
      */
     private func validSleep(beginTime: NSDate, endTime: NSDate) -> Int {
         
-        var minustsCount   = 0
-        var longSleepCount = 0 // 长时间睡眠计数
+        var minustsCount   = 0 // 睡眠计数
+        var longSleepCount = 0 // 无效睡眠计数
         var testCount = 0
+        
         
         Log.info("validSleep Begin")
         
@@ -449,6 +450,8 @@ extension ChartsRealmProtocol {
         
         for timeIndex in 0..<sleepDatas.count {
             
+            testCount += 1
+            
             // 前后计算范围
             let range = 2
             
@@ -458,62 +461,99 @@ extension ChartsRealmProtocol {
             // 如果timeIndex为最后两个元素，则以最末尾作为结束
             let endIndex   = timeIndex > sleepDatas.count - (range + 1) ? sleepDatas.count - 1 : timeIndex + range
             
-            var tiltsTotal = sleepDatas[beginIndex...endIndex].reduce(0, combine: +)
+            let tiltsTotal = sleepDatas[beginIndex...endIndex].reduce(0, combine: +)
             
-            Log.info("======\(sleepDatas[beginIndex...endIndex].count)========")
+            let stepItem = stepDatas[timeIndex]
+            let tiltsItem = sleepDatas[timeIndex]
+  
             
-            // 条件1：之前20分钟tilt数量+当前10分钟tilt +之后20分钟tilt数量<40
-            if tiltsTotal >= 40 {
-                longSleepCount = 0
-                continue
-            }
+            //记录连续的 0 去掉连续的0
             
-            tiltsTotal = sleepDatas[timeIndex]
-            
-            // 条件2：当前10分钟tilt<15
-            if tiltsTotal >= 15 {
-                longSleepCount = 0
-                continue
-            }
-            
-            // 条件3：当前10分钟step<30
-            
-            let stepTotal = stepDatas[timeIndex]
-            if stepTotal >= 30 {
-                longSleepCount = 0
-                continue
-            }
-            
-            
-            // 退出无睡眠状态,减掉无效计数
-            if stepTotal != 0 || tiltsTotal != 0 {
-                
-                if longSleepCount >= noSleepTime {
-                    minustsCount -= longSleepCount
-                }
-                
-                longSleepCount = 0
-            }
-            
-            minustsCount += 1
-            testCount += 1
-            
-            //            Log.info("\(timeIndex)----\((beginTime.gregorian + (timeIndex * 10).minute).date.toString(format: "MM-dd HH:mm"))----\(stepDatas[timeIndex])----\(sleepDatas[timeIndex])")
-            
-            // 无数据计数 tilt and step=0的时间连续大于2小时，则将连续的tilt and step=0的时间判定为无睡眠状态
-            if stepTotal == 0 && tiltsTotal == 0 {
+            if stepItem == 0 && tiltsItem == 0 {
+ 
                 longSleepCount += 1
             }
             
+            
+            
+            // 如果全部都没有数据 直接返回无睡眠
+            
+            if longSleepCount == sleepDatas.count || longSleepCount == stepDatas.count {
+                
+                return 0
+            }
+            
+            
+            
+            // 退出无睡眠状态,减掉无效计数   
+            // 如果longSleepCount 大于 noSleepTime  往后能找到非0 值 这可以去掉该部分无效数据
+            // 如果 在 往后找不到非0 的数值 这判断这个循环结束的时候 有多少0
+            
+            if stepItem != 0 || tiltsItem != 0 {
+            
+                if longSleepCount >= noSleepTime
+                    
+                {
+                    
+                    minustsCount -= longSleepCount
+                    longSleepCount = 0
+                    
+                }
+                
+            }else  {
+
+                if testCount == sleepDatas.count - 1 {  // 如果在循环结束的时候 还没有出现非0 的数据 则 在循环结束的时候 截掉数据
+                    
+                    if longSleepCount >= noSleepTime
+                        
+                    {
+                        
+                        minustsCount -= longSleepCount
+                        longSleepCount = 0
+                        
+                    }
+                    
+                }
+                
+                
+            }
+      
+        
+            // 条件1：之前20分钟tilt数量+当前10分钟tilt +之后20分钟tilt数量<40
+            // 条件2：当前10分钟tilt<15
+            // 条件3：当前10分钟step<30
+            
+            if tiltsTotal < 40 &&  tiltsItem < 15 && stepItem < 30 {
+              
+                
+                Log.info("\(tiltsTotal)=====\(tiltsItem)=====\(stepItem)=====\(timeIndex)")
+                
+                minustsCount += 1
+                
+            }
+            
+            
         }
         
-        if longSleepCount >= noSleepTime {
-            minustsCount -= longSleepCount
-        }
         
+        
+//        if longSleepCount >= noSleepTime
+//            
+//        {
+//            
+//            minustsCount -= longSleepCount
+//            longSleepCount = 0
+//            
+//        }
+//        
+
         Log.info("validSleep end")
+
         
-        Log.info("validSleep testCount = \(testCount)")
+        if minustsCount < 0 {
+            
+            minustsCount = 0
+        }
         
         return minustsCount
     }
@@ -593,13 +633,13 @@ extension ChartsRealmProtocol {
             return []
         }
         
-        let dataSize = ((endTime - beginTime).totalMinutes) / 10 + 1
+        let dataSize = ((endTime - beginTime).totalMinutes) / 10
         
         var reslutArray = Array<Int>(count: dataSize, repeatedValue: 0)
         
         for data in realmSleepData {
             
-            let index = (data.time - beginTime).totalMinutes / 10
+            let index = (data.time - beginTime).totalMinutes / 10 - 1  // 防止数组越界
             reslutArray[index] = data.tilts
         }
         
@@ -626,13 +666,13 @@ extension ChartsRealmProtocol {
             return []
         }
         
-        let dataSize = ((endTime - beginTime).totalMinutes) / 10  + 1
+        let dataSize = ((endTime - beginTime).totalMinutes) / 10
         
         var reslutArray = Array<Int>(count: dataSize, repeatedValue: 0)
         
         for data in realmStepData {
             
-            let index = (data.time - beginTime).totalMinutes / 10
+            let index = (data.time - beginTime).totalMinutes / 10 - 1
             reslutArray[index] = data.step
         }
         
@@ -671,7 +711,8 @@ extension ChartsRealmProtocol {
      - date: 2016-06-01
      
      - parameter beginTime: 开始时间
-     - parameter endTime:   结束时间
+     - parameter endTime:   结束时间 
+     时间从 18:00 到 18:00
      
      - returns: (总的睡眠时间, 深睡, 浅睡)
      */
