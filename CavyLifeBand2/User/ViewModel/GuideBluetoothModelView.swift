@@ -39,7 +39,6 @@ struct GuideBandBluetooth: GuideViewModelPotocols, LifeBandBleDelegate {
     var title: String { return L10n.GuideLinkCavy.string }
     var centerView: UIView
     var hiddeBackBtn: Bool { return BindBandCtrl.bindScene.hiddeBackBtn }
-    
     var hiddeGuideBtn: Bool { return true }
     
     init() {
@@ -61,6 +60,7 @@ struct GuideBandBluetooth: GuideViewModelPotocols, LifeBandBleDelegate {
             return
         }
         
+
         let rootVC = StoryboardScene.Guide.instantiateGuideView()
         let openBandVM = GuideBandOpenBand()
         
@@ -116,10 +116,12 @@ struct GuideBandOpenBand: GuideViewModelPotocols, LifeBandBleDelegate {
             LifeBandBle.shareInterface.lifeBandBleDelegate = nil
             
         }
-        
+ 
     }
     
-    func onCilckBack(viewController: UIViewController) {
+    
+    
+       func onCilckBack(viewController: UIViewController) {
         
         // 注册流程时候 返回注册登录首页
         if queryUserId.isEmpty {
@@ -204,6 +206,27 @@ struct GuideBandLinking: GuideViewModelPotocols, LifeBandBleDelegate  {
             Log.info("GuideBandLinking")
             
             CavyDefine.bluetoothPresentViewController(UINavigationController(rootViewController: rootViewController))
+            
+            //开始失败记时
+            
+            self.startTimer()
+        }
+        
+    }
+    
+    
+    func startTimer() {
+        
+        NSTimer.runThisAfterDelay(seconds: 10) {
+            // 如果10秒连接上了 return
+            if LifeBandBle.shareInterface.peripheral?.state == .Connected  {
+                return
+            }
+            
+            let rootVC = StoryboardScene.Guide.instantiateGuideView()
+            let failVM = GuideBandFail()
+            rootVC.configView(failVM, delegate: failVM)
+            CavyDefine.bluetoothPresentViewController(UINavigationController(rootViewController: rootVC))
             
         }
         
@@ -311,17 +334,26 @@ struct GuideBandSuccess: GuideViewModelPotocols, QueryUserInfoRequestsDelegate, 
 /**
  *  @author xuemincai
  *
- *  连接失败
+ *  连接失败  从显示连接开始 10秒内未连接成功 显示失败
  */
 struct GuideBandFail: GuideViewModelPotocols {
     
     var title: String { return L10n.GuideLinkCavy.string }
-    var hiddeGuideBtn: Bool { return true }
-    var centerView: UIView { return PictureView(title: L10n.GuidePairFail.string, titleInfo: L10n.GuidePairFailInfo.string, midImage: AnimatableImageView(image: UIImage(asset: .GuidePairFail))) }
+    var hiddeGuideBtn: Bool { return false }
+    var hiddeBackBtn: Bool  { return true }
+    var centerView: UIView  { return PictureView(title: L10n.GuidePairFail.string, titleInfo: L10n.GuidePairFailInfo.string, midImage: AnimatableImageView(image: UIImage(asset: .GuidePairFail))) }
+   
+    var guideBtnImage: UIImage { return UIImage(asset: .GuideFlashBtn) }
+    var guideBtnHighLightImage: UIImage { return UIImage(asset: .GuideFlashBtnHighLight) }
     
     func onClickGuideOkBtn(viewController: UIViewController) {
         
-        LifeBandBle.shareInterface.bleConnect(BindBandCtrl.bandMacAddress)
+        let rootVC = StoryboardScene.Guide.instantiateGuideView()
+        let openBandVM = GuideBandOpenBand()
+        
+        rootVC.configView(openBandVM, delegate: openBandVM)
+        CavyDefine.bluetoothPresentViewController(UINavigationController(rootViewController: rootVC))
+
         
     }
     

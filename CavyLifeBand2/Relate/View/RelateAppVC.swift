@@ -126,7 +126,9 @@ extension RelateAppVC: UITableViewDelegate {
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         tableView.deselectRowAtIndexPath(indexPath, animated: false)
         
-        goDetailInfoWeb(indexPath.row)
+//        goDetailInfoWeb(indexPath.row)
+        
+        UIApplication.sharedApplication().openURL(NSURL(string: "https://itunes.apple.com/cn/app/suan-shu-pao-ku-tun-shu-ke/id1097470418?mt=8")!)
         
     }
     

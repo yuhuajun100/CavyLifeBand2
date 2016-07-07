@@ -398,7 +398,9 @@ extension ChartsRealmProtocol {
         sleepDatas = querySleepInfoDays(beginTime, endTime: endTime).map {
             let newDate = (beginTime.gregorian + index.day).date
             index += 1
-            return PerSleepChartsData(time: newDate, deepSleep: Int($0.1), lightSleep: Int($0.2))
+            
+            //将单位长度1  转换为 10分钟 用于显示
+            return PerSleepChartsData(time: newDate, deepSleep: Int($0.1 * 10), lightSleep: Int($0.2 * 10))
         }
         
         return sleepDatas
@@ -431,8 +433,9 @@ extension ChartsRealmProtocol {
      - parameter sleepInfo: 睡眠信息
      
      - returns: 睡眠时长 10分钟为单位， 1 = 10 分钟
+      （$0  睡眠时长     $1 深睡时长）
      */
-    private func validSleep(beginTime: NSDate, endTime: NSDate) -> Int {
+    private func validSleep(beginTime: NSDate, endTime: NSDate) ->  (Int , Int) {
         
         var minustsCount   = 0 // 睡眠计数
         var longSleepCount = 0 // 无效睡眠计数
@@ -445,7 +448,7 @@ extension ChartsRealmProtocol {
         let stepDatas = transformStepData(beginTime, endTime: endTime)
         
         if stepDatas.isEmpty || sleepDatas.isEmpty {
-            return 0
+            return (0,0)
         }
         
         for timeIndex in 0..<sleepDatas.count {
@@ -472,6 +475,7 @@ extension ChartsRealmProtocol {
             if stepItem == 0 && tiltsItem == 0 {
  
                 longSleepCount += 1
+                
             }
             
             
@@ -480,7 +484,7 @@ extension ChartsRealmProtocol {
             
             if longSleepCount == sleepDatas.count || longSleepCount == stepDatas.count {
                 
-                return 0
+                return (0,0)
             }
             
             
@@ -502,7 +506,9 @@ extension ChartsRealmProtocol {
                 
             }else  {
 
-                if testCount == sleepDatas.count - 1 {  // 如果在循环结束的时候 还没有出现非0 的数据 则 在循环结束的时候 截掉数据
+                  // 如果在循环结束的时候 还没有出现非0 的数据 则 在循环结束的时候 截掉数据
+                
+                if testCount == sleepDatas.count - 1 {
                     
                     if longSleepCount >= noSleepTime
                         
@@ -515,7 +521,6 @@ extension ChartsRealmProtocol {
                     
                 }
                 
-                
             }
       
         
@@ -524,42 +529,37 @@ extension ChartsRealmProtocol {
             // 条件3：当前10分钟step<30
             
             if tiltsTotal < 40 &&  tiltsItem < 15 && stepItem < 30 {
-              
-                
-                Log.info("\(tiltsTotal)=====\(tiltsItem)=====\(stepItem)=====\(timeIndex)")
-                
+ 
                 minustsCount += 1
                 
             }
             
             
         }
-        
-        
-        
-//        if longSleepCount >= noSleepTime
-//            
-//        {
-//            
-//            minustsCount -= longSleepCount
-//            longSleepCount = 0
-//            
-//        }
-//        
 
         Log.info("validSleep end")
 
         
-        if minustsCount < 0 {
+        guard  minustsCount >= 0 else {
             
-            minustsCount = 0
+            return  (0,0)
         }
         
-        return minustsCount
+        
+         Log.info("总共睡眠\(minustsCount)=====深睡个数\(longSleepCount)")
+        
+        return (minustsCount,longSleepCount)
     }
+    
+    
     
     /**
      统计深度睡眠数据
+     深睡与浅睡状态的判定
+     在S中，tilt and step=0的总时长计为d
+     d*0.9=深睡时长
+     S-d*0.9=浅睡时长
+
      
      - author: sim cai
      - date: 2016-05-31
@@ -571,49 +571,53 @@ extension ChartsRealmProtocol {
      
      - returns: 深度睡眠值  10分钟为单位， 1 = 10 分钟
      */
-    private func sumDeepSleep(beginTime: NSDate, endTime: NSDate) -> Int {
-        
-        var minustsCount   = 0
-        var longSleepCount = 0 // 长时间睡眠计数
-        
-        Log.info("sumDeepSleep Begin")
-        
-        let sleepDatas = transformSleepData(beginTime, endTime: endTime)
-        let stepDatas = transformStepData(beginTime, endTime: endTime)
-        
-        if stepDatas.isEmpty && stepDatas.isEmpty {
-            return 0
-        }
-        
-        for timeIndex in 0..<sleepDatas.count {
-            
-            if sleepDatas[timeIndex] != 0 || stepDatas[timeIndex] != 0 {
-                
-                // 退出无睡眠状态,减掉无效计数
-                if longSleepCount >= noSleepTime {
-                    minustsCount -= longSleepCount
-                }
-                
-                longSleepCount = 0
-                continue
-            }
-            
-            minustsCount += 1
-            longSleepCount += 1
-            
-            
-        }
-        
-        if longSleepCount >= noSleepTime {
-            minustsCount -= longSleepCount
-        }
-        
-        Log.info("sumDeepSleep end")
-        
-        return minustsCount
-        
-    }
-    
+//    private func sumDeepSleep(beginTime: NSDate, endTime: NSDate) -> Int {
+//        
+//        var minustsCount   = 0
+//        var longSleepCount = 0 // 长时间睡眠计数
+//        
+//        Log.info("sumDeepSleep Begin")
+//        
+//        let sleepDatas = transformSleepData(beginTime, endTime: endTime)
+//        let stepDatas = transformStepData(beginTime, endTime: endTime)
+//        
+//        if stepDatas.isEmpty && stepDatas.isEmpty {
+//            return 0
+//        }
+//        
+//        for timeIndex in 0..<sleepDatas.count {
+//            
+//            if sleepDatas[timeIndex] != 0 || stepDatas[timeIndex] != 0 {
+//                
+//                // 退出无睡眠状态,减掉无效计数
+//                if longSleepCount >= noSleepTime {
+//                    minustsCount -= longSleepCount
+//                }
+//                
+//                longSleepCount = 0
+//                continue
+//            }
+//            
+//            minustsCount += 1
+//            longSleepCount += 1
+//            
+//            
+//        }
+//        
+//        if longSleepCount >= noSleepTime {
+//            minustsCount -= longSleepCount
+//        }
+//        
+//        Log.info("sumDeepSleep end")
+//        
+//        
+//        
+//        
+//        
+//        return minustsCount
+//        
+//    }
+//    
     /**
      将数据库中的睡眠数据转成10分钟存储的数组
      
@@ -693,15 +697,15 @@ extension ChartsRealmProtocol {
      */
     private func querySleepInfo(beginTime: NSDate, endTime: NSDate) -> (Double, Double, Double) {
         
-        let sleepTime = validSleep(beginTime, endTime: endTime)
+        let sleepInfo = validSleep(beginTime, endTime: endTime)
         
-        let deepSleep = sumDeepSleep(beginTime, endTime: endTime)
+        let deepSleep = Double(sleepInfo.1) * 0.9
         
-        let lightSleep = Double(sleepTime) - Double(deepSleep) * 0.9
+        let lightSleep = Double(sleepInfo.0) - deepSleep
         
-        Log.info("sleepTime =\(sleepTime), deepSleep = \(deepSleep), lightSleep = \(lightSleep)")
+        Log.info("sleepTime =\(sleepInfo.0), deepSleep = \(deepSleep), lightSleep = \(lightSleep)")
         
-        return (Double(sleepTime), Double(deepSleep), lightSleep)
+        return (Double(sleepInfo.0), Double(deepSleep), Double(lightSleep))
     }
     
     /**
