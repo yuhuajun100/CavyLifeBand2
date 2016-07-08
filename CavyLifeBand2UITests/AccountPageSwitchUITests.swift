@@ -189,7 +189,7 @@ class AccountPageSwitchUITests: XCTestCase {
             // 配对成功
             XCTAssert(app.staticTexts["连接手环"].exists)
             //            XCTAssert(infoTitle.label == "")
-            XCTAssert(app.staticTexts["配对成功"].exists)
+            XCTAssert(app.staticTexts["绑定成功"].exists)
             XCTAssert(app.images["GuidePairSeccuss"].exists)
             XCTAssert(app.staticTexts["开始健康之旅吧"].exists)
             guideButton.tap()

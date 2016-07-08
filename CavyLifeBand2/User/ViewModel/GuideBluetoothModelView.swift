@@ -96,6 +96,8 @@ struct GuideBandOpenBand: GuideViewModelPotocols, LifeBandBleDelegate {
     var hiddeBackBtn: Bool { return false }//BindBandCtrl.bindScene.hiddeBackBtn }
     var queryUserId: String { return CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId }
     var hiddeGuideBtn: Bool { return true }
+ 
+    
     
     func onLoadView() {
         
@@ -103,11 +105,9 @@ struct GuideBandOpenBand: GuideViewModelPotocols, LifeBandBleDelegate {
         
         LifeBandBle.shareInterface.bleBinding {
             
-                BindBandCtrl.bandMacAddress = $1
-            
+            BindBandCtrl.bandMacAddress = $1
             let rootViewController = StoryboardScene.Guide.instantiateGuideView()
             let linkingVM = GuideBandLinking()
-            
             rootViewController.configView(linkingVM, delegate: linkingVM)
             
             CavyDefine.bluetoothPresentViewController(UINavigationController(rootViewController: rootViewController))
@@ -115,11 +115,11 @@ struct GuideBandOpenBand: GuideViewModelPotocols, LifeBandBleDelegate {
             Log.info("GuideBandOpenBand")
             LifeBandBle.shareInterface.lifeBandBleDelegate = nil
             
+            
         }
  
     }
-    
-    
+
     
        func onCilckBack(viewController: UIViewController) {
         
@@ -169,6 +169,8 @@ struct GuideBandOpenBand: GuideViewModelPotocols, LifeBandBleDelegate {
         
     }
     
+   
+    
 }
 
 /**
@@ -176,22 +178,38 @@ struct GuideBandOpenBand: GuideViewModelPotocols, LifeBandBleDelegate {
  *
  *  手环连接中
  */
-struct GuideBandLinking: GuideViewModelPotocols, LifeBandBleDelegate  {
+class GuideBandLinking: NSObject, GuideViewModelPotocols, LifeBandBleDelegate  {
     
     var title: String { return L10n.GuideLinkCavy.string }
-    var centerView: UIView
+    var centerView: UIView 
     var hiddeGuideBtn: Bool { return true }
     var realm: Realm = try! Realm()
     var hiddeBackBtn: Bool { return true }
+    var isPush: Bool?
     
-    init() {
-        
+    
+    
+    override init() {
+ 
+      
         let imageView = AnimatableImageView()
         imageView.animateWithImage(named: "GuideLinking@3x.gif")
         centerView = PictureView(title: L10n.GuideLinking.string, midImage: imageView)
+
+        super.init()
+        
+           // MARK: 开始失败记时
+     //   self.startTimer()
         
     }
     
+    
+    
+}
+
+extension GuideBandLinking {
+    
+
     func onLoadView() {
         
         LifeBandBle.shareInterface.lifeBandBleDelegate = self
@@ -207,9 +225,7 @@ struct GuideBandLinking: GuideViewModelPotocols, LifeBandBleDelegate  {
             
             CavyDefine.bluetoothPresentViewController(UINavigationController(rootViewController: rootViewController))
             
-            //开始失败记时
             
-            self.startTimer()
         }
         
     }
@@ -217,20 +233,33 @@ struct GuideBandLinking: GuideViewModelPotocols, LifeBandBleDelegate  {
     
     func startTimer() {
         
+        
         NSTimer.runThisAfterDelay(seconds: 10) {
-            // 如果10秒连接上了 return
-            if LifeBandBle.shareInterface.peripheral?.state == .Connected  {
-                return
-            }
             
-            let rootVC = StoryboardScene.Guide.instantiateGuideView()
-            let failVM = GuideBandFail()
-            rootVC.configView(failVM, delegate: failVM)
-            CavyDefine.bluetoothPresentViewController(UINavigationController(rootViewController: rootVC))
+            if self.isPush ==  true  {
+                
+                return
+                
+            }else{
+                
+                
+                // 如果10秒连接上了 return
+                if LifeBandBle.shareInterface.peripheral?.state == .Connected  {
+                    return
+                }
+                
+                
+                let rootVC = StoryboardScene.Guide.instantiateGuideView()
+                let failVM = GuideBandFail()
+                rootVC.configView(failVM, delegate: failVM)
+                CavyDefine.bluetoothPresentViewController(UINavigationController(rootViewController: rootVC))
+                
+            }
             
         }
         
     }
+    
     
     func bleMangerState(bleState: CBCentralManagerState) {
         
@@ -248,7 +277,11 @@ struct GuideBandLinking: GuideViewModelPotocols, LifeBandBleDelegate  {
         
     }
     
+    
 }
+
+
+
 
 /**
  *  @author xuemincai

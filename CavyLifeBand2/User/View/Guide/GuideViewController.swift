@@ -50,7 +50,7 @@ class GuideViewController: UIViewController, BaseViewControllerPresenter {
     override func viewDidLoad() {
         
         super.viewDidLoad()
-        
+        Log.error("viewDidLoad GuideViewController")
         allViewsLayOut()
 
 //        updateViewStyle()
@@ -71,6 +71,7 @@ class GuideViewController: UIViewController, BaseViewControllerPresenter {
     
     deinit {
         Log.error("deinit GuideViewController")
+        
     }
     
     func onLeftBtnBack() {
@@ -111,7 +112,7 @@ class GuideViewController: UIViewController, BaseViewControllerPresenter {
         
         leftBtn?.hidden = dataSource?.hiddeBackBtn ?? false
         
-        guard let viewDataSource = dataSource else {
+        guard let viewDataSource = dataSource else { 
             return
         }
         
@@ -151,6 +152,8 @@ class GuideViewController: UIViewController, BaseViewControllerPresenter {
         delegate?.onClickGuideOkBtn(self)
         
     }
+    
+    
     
 }
 
