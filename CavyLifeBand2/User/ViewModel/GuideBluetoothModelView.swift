@@ -218,7 +218,7 @@ extension GuideBandLinking {
             
             let rootViewController = StoryboardScene.Guide.instantiateGuideView()
             let bandVM = GuideBandSuccess()
-            
+            self.isPush =  true
             rootViewController.configView(bandVM, delegate: bandVM)
             
             Log.info("GuideBandLinking")
