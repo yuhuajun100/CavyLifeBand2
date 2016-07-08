@@ -198,8 +198,8 @@ class GuideBandLinking: NSObject, GuideViewModelPotocols, LifeBandBleDelegate  {
 
         super.init()
         
-           // MARK: 开始失败记时
-     //   self.startTimer()
+        // MARK: 开始失败记时
+        self.startTimer()
         
     }
     
