@@ -38,7 +38,7 @@ class CustomCamera: UIViewController {
     @IBOutlet weak var videRecordTime: UILabel!
     @IBOutlet weak var shutterPhoto: UIButton!
     @IBOutlet weak var lastImage: UIButton!
-
+    
     var isPhotoOrVideo: Bool = true // true 代表拍照
     var errorLabel     = UILabel?()
     var camera         = LLSimpleCamera()
@@ -60,8 +60,16 @@ class CustomCamera: UIViewController {
         
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(CustomCamera.photoAndVideo), name: LifeBandCtrlNotificationName.BandButtonEvenClick1.rawValue, object: nil)
         
+        
+        if isPhotoOrVideo {
+            
+            self.shutterPhoto.setImage(UIImage(asset: .CameraTakePhoto), forState: .Normal)
+            
+        }
+    
     }
     
+   
     override func viewDidLoad() {
         
         super.viewDidLoad()
@@ -69,9 +77,18 @@ class CustomCamera: UIViewController {
         UIApplication.sharedApplication().idleTimerDisabled = true
         
         cameraAllViewLayout()
+       
         
     }
-
+    
+    override func viewDidDisappear(animated: Bool) {
+        
+        super.viewDidDisappear(animated)
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+        
+    }
+    
+    
     // 全部控件布局
     func cameraAllViewLayout() {
         
@@ -88,7 +105,7 @@ class CustomCamera: UIViewController {
         self.lastImage.layer.masksToBounds    = true
         self.lastImage.layer.cornerRadius     = 6
         self.lastImage.imageView?.contentMode = UIViewContentMode.ScaleAspectFill
-
+        
         view.addSubview(headView)
         view.addSubview(bottomView)
         
@@ -154,7 +171,7 @@ class CustomCamera: UIViewController {
     // 获取Video保存路径
     func applicationDocumentsDirectory() -> NSURL{
         
-         return NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).last!
+        return NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).last!
     }
     
     // 获取系统相册最后一张图片
@@ -171,7 +188,7 @@ class CustomCamera: UIViewController {
             
             return
         }
- 
+        
         // 使用Photos来获取照片的时候，我们首先需要使用PHAsset和PHFetchOptions来得到PHFetchResult
         let fetchOptions = PHFetchOptions()
         let fetchResults = PHAsset.fetchAssetsWithOptions(fetchOptions)
@@ -186,13 +203,17 @@ class CustomCamera: UIViewController {
         let lastAsset = fetchResults.lastObject as! PHAsset
         var returnImg = UIImage()
         PHImageManager.defaultManager().requestImageForAsset(lastAsset, targetSize: CGSizeMake(ez.screenWidth, ez.screenWidth), contentMode: .AspectFill, options: nil) { (result, info) -> Void in
-            returnImg = result!
+            
+            // 防止
+            
+            returnImg = result ?? UIImage()
+            
         }
-                
+        
         self.lastImage.setBackgroundImage(returnImg, forState: .Normal)
         
     }
-
+    
     // 开始摄影
     func startVideo(){
         Log.info("开始摄像")
@@ -259,7 +280,7 @@ class CustomCamera: UIViewController {
         self.camera.stopRecording()
         
     }
-
+    
     // 取消录像
     func stopVideoNoSave() {
         
@@ -281,7 +302,7 @@ class CustomCamera: UIViewController {
         self.shutterPhoto.setImage(UIImage(asset: .CameraVideoWait), forState: .Normal)
         // 保存录像
         self.camera.stopRecording()
-
+        
     }
     
     // 录像计时器 开始计时
@@ -312,7 +333,7 @@ class CustomCamera: UIViewController {
         timerCount += 1
         Log.info(timerCount)
         
-
+        
         let hour    = timerCount / 3600
         let minutes = timerCount / 60
         let second  = timerCount - hour * 3600 - minutes * 60
@@ -355,7 +376,7 @@ class CustomCamera: UIViewController {
             self.camera.updateFlashMode(LLCameraFlashOn)
             self.flashSwitch.setImage(self.falshOnImge.image, forState: UIControlState.Normal)
         }
-
+        
     }
     
     // 切换摄像头方向
@@ -369,10 +390,8 @@ class CustomCamera: UIViewController {
     @IBAction func backHome(sender: AnyObject) {
         
         UIApplication.sharedApplication().idleTimerDisabled = false
-        
         self.navigationController?.setNavigationBarHidden(false, animated: false)
         self.navigationController?.popViewControllerAnimated(false)
-        
         NSNotificationCenter.defaultCenter().postNotificationName(NotificationName.HomeRightOnClickMenu.rawValue, object: nil)
         stopVideoNoSave()
         
@@ -406,11 +425,11 @@ class CustomCamera: UIViewController {
                 let newimage: UIImage = image.imageRotateNormal()
                 
                 UIImageWriteToSavedPhotosAlbum(newimage, nil, nil, nil)
-
-            }, exactSeenImage: true)
+                
+                }, exactSeenImage: true)
             
         }else{
-
+            
             if self.camera.recording == false {
                 
                 // start recording
@@ -429,17 +448,17 @@ class CustomCamera: UIViewController {
     @IBAction func goPhotoAlbum(sender: AnyObject) {
         
         // 使用Photos来获取照片的时候，我们首先需要使用PHAsset和PHFetchOptions来得到PHFetchResult
-        let fetchOptions = PHFetchOptions()        
+        let fetchOptions = PHFetchOptions()
         let fetchResults = PHAsset.fetchAssetsWithMediaType(PHAssetMediaType.Image, options: fetchOptions)
         
         let photoVC = StoryboardScene.Camera.instantiatePhotoAlbumView()
-
+        
         photoVC.totalCount = fetchResults.count
         photoVC.currentCount = fetchResults.count
         photoVC.loadIndex = fetchResults.count - 10 < 0 ? 0 : fetchResults.count - 10
         
         self.presentVC(photoVC)
-
+        
     }
     
     // 更改到照相模式
@@ -471,4 +490,4 @@ class CustomCamera: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
- }
+}

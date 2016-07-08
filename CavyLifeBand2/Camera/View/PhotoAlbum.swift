@@ -145,6 +145,8 @@ class PhotoAlbum: UIViewController, UIScrollViewDelegate{
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
+        self.scrollView.removeSubviews()
+        continueLoadPhoto()
         // Dispose of any resources that can be recreated.
     }
     
