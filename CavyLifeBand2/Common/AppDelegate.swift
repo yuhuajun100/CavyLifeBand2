@@ -62,6 +62,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
         
         #if DEBUG
             
+            //打开友盟测试数据模式
+            
+            MobClick.setLogEnabled(true)
+           
             Log.theme = Theme(
                 trace: "#C5C8C6",
                 debug: "#81A2BE",
@@ -85,8 +89,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
         
         UMAnalyticsConfig.sharedInstance().appKey = UMAPPKey
         MobClick.startWithConfigure(UMAnalyticsConfig.sharedInstance())
+      
         
-     
     }
     
     

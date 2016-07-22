@@ -138,7 +138,7 @@ struct AccountBirthdayViewModel: AccountSettingModelPotocols {
     var loadingView: UIActivityIndicatorView?
 
     // 添加初始化方法
-    init(year: Int, month: Int, day: Int) {
+    init(year: Int = 1990, month: Int = 1, day: Int = 15) {
         
         centerView = BirthdayView(frame: CGRectMake(0, 0, middleViewWidth, middleViewHeight), year: year, month: month, day: day)
     }
