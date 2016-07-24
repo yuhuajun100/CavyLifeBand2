@@ -35,7 +35,7 @@ class RightViewController: UIViewController {
         addMenumenuGroupData(BandHardwareMenuGroupDataModel(isConnect: false))
         addMenumenuGroupData(BindingBandMenuGroupDataModel())
         
-        NSTimer.runThisEvery(seconds: 30) { _ in
+        NSTimer.runThisEvery(seconds: 3) { _ in
             
             self.getBandElectric()
             
