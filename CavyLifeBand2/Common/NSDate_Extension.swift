@@ -143,7 +143,7 @@ extension NSDate {
             
             if index != 1 {
                 
-                monday = (self.gregorian - index.day).date
+                monday = (self.gregorian - (index - 1).day).date
                 
             }
             
