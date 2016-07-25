@@ -432,6 +432,7 @@ extension UserInfoModel {
         self.coins      = userProfile.coins
         self.phone      = userProfile.phone
         self.signUpDate = userProfile.signUpDate
+        self.steps      = userProfile.steps
         
         for data in userProfile.awards {
             let award = UserAwardsModel()

@@ -320,7 +320,7 @@ struct GuideBandSuccess: GuideViewModelPotocols, QueryUserInfoRequestsDelegate, 
             guard userInfo.sleepGoal == 0 else {
                 
                 UIApplication.sharedApplication().keyWindow?.setRootViewController(StoryboardScene.Home.instantiateRootView(), transition: CATransition())
-                
+                UIApplication.sharedApplication().keyWindow?.setRootViewController(StoryboardScene.Home.instantiateRootView(), transition: CATransition())
                 return
             }
             
