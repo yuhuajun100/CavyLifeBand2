@@ -26,7 +26,7 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
     var chartsData: [PerStepChartsData] = []
     
     // 左上角显示最大值
-    var maxValue: Int = 3
+    var maxValue: Int = 0
     
     /// 透明视图 负责显示柱状图的数值
     var clearView = UIView()
@@ -35,6 +35,8 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
      配置所有视图 主入口
      */
     func configAllView() {
+        
+        maxValue = 0
         
         self.backgroundColor = UIColor(named: .HomeViewMainColor)
         
@@ -54,6 +56,10 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
             self.leftAxis.spaceTop = 0
         }
         
+        
+        leftAxis.axisMaxValue = Double(maxValue * 1000)
+        self.setNeedsDisplay()
+        
 //        addClearView()
 
     }
@@ -62,6 +68,7 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
      总设置
      */
     func setupBarLineChartView() {
+        
         
         noDataTextDescription = "You need to provide data for the chart." // 没有数据的时显示
         drawBordersEnabled = false //是否在折线图上添加边框
@@ -195,8 +202,10 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
         
             if maxValue < chartsData[i].step / 1000 {
                 maxValue = chartsData[i].step / 1000
+
             }
 
+            
             let dataEntry = BarChartDataEntry(value: Double(chartsData[i].step), xIndex: i)
             
             yVals.append(dataEntry)
