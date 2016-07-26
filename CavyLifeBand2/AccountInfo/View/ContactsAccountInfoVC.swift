@@ -215,7 +215,7 @@ class ContactsAccountInfoVC: UIViewController, BaseViewControllerPresenter, User
             self.loadingView.startAnimating()
             
             let parameters: [String: AnyObject] = [NetRequestKey.DeviceSerial.rawValue: CavyDefine.bindBandInfos.bindBandInfo.deviceSerial,
-                                                    NetRequestKey.DeviceModel.rawValue: UIDevice.deviceType().rawValue,
+                                                    NetRequestKey.DeviceModel.rawValue: String.deviceModel(),
                                                     NetRequestKey.AuthKey.rawValue: CavyDefine.gameServerAuthKey,
                                                     NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.defaultBindBand,
                                                     NetRequestKey.Longitude.rawValue: CavyDefine.userCoordinate.longitude,

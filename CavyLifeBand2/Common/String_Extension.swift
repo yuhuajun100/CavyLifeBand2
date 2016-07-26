@@ -80,5 +80,12 @@ extension String {
         
         return string!
     }
+    
+    
+    static func deviceModel() -> String {
+        
+        return UIDevice.deviceModelReadable() + ",iPhone OS " + UIDevice.systemVersion()
+        
+    }
 
 }
