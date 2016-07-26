@@ -10,13 +10,15 @@ import UIKit
 import Log
 import EZSwiftExtensions
 import RealmSwift
+
+
 #if UITEST
 import OHHTTPStubs
 #endif
 
 var realm: Realm = try! Realm()
-let PGYAPPID = "9bb10b86bf5f62f10ec4f83d1c9847e7"
 
+let UMAPPKey = "5791832167e58e3ffd001bd0"
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
@@ -24,19 +26,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
     var window: UIWindow?
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
+     
         
-        #if UITEST
-            
-            uiTestStub()
-            
-        #endif
-        
-        #if RELEASE
-            Log.enabled = false
-           
-        #endif
-        
-        UIApplication.sharedApplication().setStatusBarStyle(UIStatusBarStyle.LightContent, animated: false)
         /**
          5适配
          */
@@ -44,25 +35,64 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
         
         realmConfig()
         
-        pgyUpdateConfig()
-        
         registerShareSdk()
         
-        setRootViewController()
-        crashConfig()
+        appConfigUMobClickSDK()
         
-        Log.theme = Theme(
-            trace:   "#C5C8C6",
-            debug:   "#81A2BE",
-            info:    "#B5BD68",
-            warning: "#F0C674",
-            error:   "#CC6666"
-        )
+        setRootViewController()
+        
+        setUserDefaultCoordinate()
+        
+        EventStatisticsApi.shareApi.uploadEventInfo(ActivityEventType.AppOpen)
+        
+        #if UITEST
+            
+            uiTestStub()
+            
+        #endif
+        
+        
+        #if RELEASE
+
+            Log.enabled = false
+            
+        #endif
+        
+        
+        
+        #if DEBUG
+            
+            //打开友盟测试数据模式
+            
+            MobClick.setLogEnabled(true)
+           
+            Log.theme = Theme(
+                trace: "#C5C8C6",
+                debug: "#81A2BE",
+                info: "#B5BD68",
+                warning: "#F0C674",
+                error: "#CC6666"
+            )
+            
+        #endif
         
         
         return true
 
     }
+    
+    /**
+     初始化友盟统计
+     */
+    
+    func appConfigUMobClickSDK() {
+        
+        UMAnalyticsConfig.sharedInstance().appKey = UMAPPKey
+        MobClick.startWithConfigure(UMAnalyticsConfig.sharedInstance())
+      
+        
+    }
+    
     
     /**
      5,5c,5s适配
@@ -101,31 +131,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
         
     }
     
-    /**
-     蒲公英升级
-     
-     - author: sim cai
-     - date: 2016-06-01
-     */
-    func pgyUpdateConfig() {
-    
-        PgyUpdateManager.sharedPgyManager().startManagerWithAppId(PGYAPPID)
-        PgyUpdateManager.sharedPgyManager().updateLocalBuildNumber()
-        PgyUpdateManager.sharedPgyManager().checkUpdateWithDelegete(self, selector: #selector(AppDelegate.updateMethod))
-        
-    }
-    
-    /**
-     自动异常上报
-     
-     - author: sim cai
-     - date: 2016-06-01
-     */
-    func crashConfig() {
-        
-       PgyManager.sharedPgyManager().startManagerWithAppId(PGYAPPID)
-        
-    }
+
     
     /**
      分享SDK
@@ -176,30 +182,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
         
     }
     
+
+    
     /**
-     蒲公英更新检查
-     
-     - author: sim cai
-     - date: 2016-06-01
-     
-     - parameter updateMethodWithDictionary: 
+     获取用户经纬度 用于事件统计接口
      */
-    func updateMethod(updateMethodWithDictionary: [String: AnyObject]?) {
+    func setUserDefaultCoordinate() {
         
-        guard let updateDictionary = updateMethodWithDictionary else {
-            return
+        SCLocationManager.shareInterface.startUpdateLocation { coordinate in
+            
+            CavyDefine.userCoordinate.latitude = coordinate.latitude.toString
+            CavyDefine.userCoordinate.longitude = coordinate.longitude.toString
+            
         }
-        
-        let localBuild = ez.appBuild?.toInt() ?? 0
-        let newBuild = (updateDictionary["versionCode"] as? String ?? "").toInt() ?? 0
-        
-        guard localBuild < newBuild else {
-            return
-        }
-        
-        PgyUpdateManager.sharedPgyManager().checkUpdate()
-        
+
     }
+    
 
 #if UITEST
     
@@ -279,6 +277,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
     func applicationDidEnterBackground(application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+        
+        // 进入后台和杀死进程
+        EventStatisticsApi.shareApi.uploadEventInfo(ActivityEventType.AppQuit)
     }
 
     func applicationWillEnterForeground(application: UIApplication) {
@@ -287,9 +288,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
         // 只有 打开蓝牙并且连接手环 自动刷新的处理
         if LifeBandBle.shareInterface.centraManager?.state == .PoweredOn && LifeBandBle.shareInterface.getConnectState() == .Connected {
         
-        NSNotificationCenter.defaultCenter().postNotificationName(RefreshStatus.AddAutoRefresh.rawValue, object: nil)
+            NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
             
         }
+        
+        EventStatisticsApi.shareApi.uploadEventInfo(ActivityEventType.AppOpen)
+        
     }
 
     func applicationDidBecomeActive(application: UIApplication) {
@@ -298,6 +302,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
 
     func applicationWillTerminate(application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+        
+        if LifeBandBle.shareInterface.centraManager?.state == .PoweredOn && LifeBandBle.shareInterface.getConnectState() == .Connected {
+            
+            EventStatisticsApi.shareApi.uploadEventInfo(ActivityEventType.BandDisconnect)
+            
+        }
+        
     }
 
     // MARK: - 如果使用SSO（可以简单理解成跳客户端授权），以下方法是必要的

@@ -65,9 +65,9 @@ extension ForgotPasswordDelegate where Self: UIViewController {
         
         loadingView.startAnimating()
         
-        let para = [NetRequsetKey.Phone.rawValue: userName,
-                    NetRequsetKey.Password.rawValue: passwd.md5(),
-                    NetRequsetKey.Code.rawValue: safetyCode]
+        let para = [NetRequestKey.Phone.rawValue: userName,
+                    NetRequestKey.Password.rawValue: passwd.md5(),
+                    NetRequestKey.Code.rawValue: safetyCode]
         
         NetWebApi.shareApi.netPostRequest(WebApiMethod.ResetPwdPhone.description, para: para, modelObject: CommenMsgResponse.self, successHandler: { [unowned self] (data) in
             self.loadingView.stopAnimating()
@@ -85,9 +85,9 @@ extension ForgotPasswordDelegate where Self: UIViewController {
         
         loadingView.startAnimating()
         
-        let para = [NetRequsetKey.Email.rawValue: userName,
-                    NetRequsetKey.Password.rawValue: passwd.md5(),
-                    NetRequsetKey.Code.rawValue: safetyCode]
+        let para = [NetRequestKey.Email.rawValue: userName,
+                    NetRequestKey.Password.rawValue: passwd.md5(),
+                    NetRequestKey.Code.rawValue: safetyCode]
         
         NetWebApi.shareApi.netPostRequest(WebApiMethod.ResetPwdEmail.description, para: para, modelObject: CommenMsgResponse.self, successHandler: { [unowned self] (data) in
             self.loadingView.stopAnimating()
@@ -153,7 +153,7 @@ extension SendSafetyCodeDelegate where Self: UIViewController {
         
         loadingView.startAnimating()
         
-        let para = [NetRequsetKey.Email.rawValue: userName]
+        let para = [NetRequestKey.Email.rawValue: userName]
         
         sendSafetyCodeBtn.enabled = false
         
@@ -178,7 +178,7 @@ extension SendSafetyCodeDelegate where Self: UIViewController {
     
     func sendSignUpPhoneCode(failBack: (CommenResponse -> Void)? = nil) {
         
-        let para = [NetRequsetKey.Phone.rawValue: userName]
+        let para = [NetRequestKey.Phone.rawValue: userName]
         loadingView.startAnimating()
         sendSafetyCodeBtn.enabled = false
         
@@ -200,7 +200,7 @@ extension SendSafetyCodeDelegate where Self: UIViewController {
     
     func sendResetPwdPhoneCode() {
     
-        let para = [NetRequsetKey.Phone.rawValue: userName]
+        let para = [NetRequestKey.Phone.rawValue: userName]
         loadingView.startAnimating()
         sendSafetyCodeBtn.enabled = false
         
@@ -220,7 +220,7 @@ extension SendSafetyCodeDelegate where Self: UIViewController {
     }
     
     func sendResetPwdEmailCode() {
-        let para = [NetRequsetKey.Email.rawValue: userName]
+        let para = [NetRequestKey.Email.rawValue: userName]
         loadingView.startAnimating()
         sendSafetyCodeBtn.enabled = false
         
@@ -259,14 +259,38 @@ protocol SignUpDelegate {
      - parameter successBack:
      - parameter failBack:    
      */
-    func signUp(isEmail: Bool, successBack:(String -> Void)?, failBack: (CommenResponse -> Void)?)
+    func signUp(isEmail: Bool, successBack: (String -> Void)?, failBack: (CommenResponse -> Void)?)
     
 }
 
 // MARK: - 注册协议扩展
 extension SignUpDelegate where Self: UIViewController {
     
-    func signUp(isEmail: Bool = false, successBack:(String -> Void)? = nil, failBack: (CommenResponse -> Void)? = nil) {
+    var emailPara: [String: String] {
+        return [NetRequestKey.Email.rawValue: userName,
+                NetRequestKey.Password.rawValue: passwd.md5(),
+                NetRequestKey.Code.rawValue: safetyCode,
+                NetRequestKey.DeviceSerial.rawValue: CavyDefine.bindBandInfos.bindBandInfo.deviceSerial,
+                NetRequestKey.DeviceModel.rawValue: UIDevice.deviceType().rawValue,
+                NetRequestKey.AuthKey.rawValue: CavyDefine.gameServerAuthKey,
+                NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.defaultBindBand,
+                NetRequestKey.Longitude.rawValue: CavyDefine.userCoordinate.longitude,
+                NetRequestKey.Latitude.rawValue: CavyDefine.userCoordinate.latitude]
+    }
+    
+    var phonePara: [String: String] {
+        return [NetRequestKey.Phone.rawValue: userName,
+                NetRequestKey.Password.rawValue: passwd.md5(),
+                NetRequestKey.Code.rawValue: safetyCode,
+                NetRequestKey.DeviceSerial.rawValue: CavyDefine.bindBandInfos.bindBandInfo.deviceSerial,
+                NetRequestKey.DeviceModel.rawValue: UIDevice.deviceType().rawValue,
+                NetRequestKey.AuthKey.rawValue: CavyDefine.gameServerAuthKey,
+                NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.defaultBindBand,
+                NetRequestKey.Longitude.rawValue: CavyDefine.userCoordinate.longitude,
+                NetRequestKey.Latitude.rawValue: CavyDefine.userCoordinate.latitude]
+    }
+    
+    func signUp(isEmail: Bool = false, successBack: (String -> Void)? = nil, failBack: (CommenResponse -> Void)? = nil) {
         
         if isEmail {
             signUpEmial({ (data) in
@@ -292,13 +316,9 @@ extension SignUpDelegate where Self: UIViewController {
         
     }
     
-    func signUpEmial(successBack:(SignUpResponse -> Void)? = nil, failBack: (CommenResponse -> Void)? = nil) {
+    func signUpEmial(successBack: (SignUpResponse -> Void)? = nil, failBack: (CommenResponse -> Void)? = nil) {
         
-        let parameters: [String: AnyObject] = [NetRequsetKey.Email.rawValue: userName,
-                                               NetRequsetKey.Password.rawValue: passwd.md5(),
-                                               NetRequsetKey.Code.rawValue: safetyCode]
-        
-        NetWebApi.shareApi.netPostRequest(WebApiMethod.SignUpEmail.description, para: parameters, modelObject: SignUpResponse.self, successHandler: { data in
+        NetWebApi.shareApi.netPostRequest(WebApiMethod.SignUpEmail.description, para: emailPara, modelObject: SignUpResponse.self, successHandler: { data in
             
             successBack?(data)
             
@@ -310,13 +330,9 @@ extension SignUpDelegate where Self: UIViewController {
         
     }
     
-    func signUpPhone(successBack:(SignUpResponse -> Void)? = nil, failBack: (CommenResponse -> Void)? = nil) {
+    func signUpPhone(successBack: (SignUpResponse -> Void)? = nil, failBack: (CommenResponse -> Void)? = nil) {
         
-        let parameters: [String: AnyObject] = [NetRequsetKey.Phone.rawValue: userName,
-                                               NetRequsetKey.Password.rawValue: passwd.md5(),
-                                               NetRequsetKey.Code.rawValue: safetyCode]
-        
-        NetWebApi.shareApi.netPostRequest(WebApiMethod.SignUpPhone.description, para: parameters, modelObject: SignUpResponse.self, successHandler: { data in
+        NetWebApi.shareApi.netPostRequest(WebApiMethod.SignUpPhone.description, para: phonePara, modelObject: SignUpResponse.self, successHandler: { data in
             
             successBack?(data)
             
@@ -383,8 +399,16 @@ extension SignInDelegate where Self: UIViewController {
     
     func signIn(successBack: (Void -> Void)? = nil, failBack: (Void -> Void)? = nil) {
         
-        let parameters: [String: AnyObject] = [NetRequsetKey.UserName.rawValue: userName,
-                                               NetRequsetKey.Password.rawValue: passwd.md5()]
+        let parameters: [String: AnyObject] = [NetRequestKey.UserName.rawValue: userName,
+                                               NetRequestKey.Password.rawValue: passwd.md5(),
+                                               NetRequestKey.DeviceSerial.rawValue: CavyDefine.bindBandInfos.bindBandInfo.deviceSerial,
+                                               NetRequestKey.DeviceModel.rawValue: UIDevice.deviceType().rawValue,
+                                               NetRequestKey.AuthKey.rawValue: CavyDefine.gameServerAuthKey,
+                                               NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.defaultBindBand,
+                                               NetRequestKey.Longitude.rawValue: CavyDefine.userCoordinate.longitude,
+                                               NetRequestKey.Latitude.rawValue: CavyDefine.userCoordinate.latitude]
+        
+        
         
         NetWebApi.shareApi.netPostRequest(WebApiMethod.Login.description, para: parameters, modelObject: LoginResponse.self, successHandler: { (data) in
             

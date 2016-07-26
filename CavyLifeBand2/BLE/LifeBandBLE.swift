@@ -376,26 +376,13 @@ extension LifeBandBle: CBCentralManagerDelegate {
             
             bleConnect(self.peripheralMacAddress)
             
-            /**
-             *  蓝牙状态改变 要自动刷新
-             *
-             *  等待1秒 连接手环的时间 手环连接商会请求刷新
-             *  所以如果手环未连接 次吃在轻轻刷新 如果连接 就不要刷新
-             *
-             */
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(1 * NSEC_PER_SEC)), dispatch_get_main_queue ()) {
-                
-                if LifeBandBle.shareInterface.getConnectState() != .Connected {
-                    
-                    NSNotificationCenter.defaultCenter().postNotificationName(RefreshStatus.AddAutoRefresh.rawValue, object: nil)
-                    
-                }
-                
-            }
-            
         } else {
             
             NSNotificationCenter.defaultCenter().postNotificationName(BandBleNotificationName.BandDesconnectNotification.rawValue, object: nil)
+            EventStatisticsApi.shareApi.uploadEventInfo(ActivityEventType.BandDisconnect)
+            // 如果在正在同步数据时候 断开蓝牙 要是下拉同步消失
+            NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
+
         }
         
         lifeBandBleDelegate?.bleMangerState(central.state)
@@ -407,12 +394,19 @@ extension LifeBandBle: CBCentralManagerDelegate {
         peripheral.discoverServices(nil)
         stopScaning()
         central.stopScan()
-        NSNotificationCenter.defaultCenter().postNotificationName(BandBleNotificationName.BandConnectNotification.rawValue, object: nil)
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(2 * NSEC_PER_SEC)), dispatch_get_main_queue ()) {
+            
+            NSNotificationCenter.defaultCenter().postNotificationName(BandBleNotificationName.BandConnectNotification.rawValue, object: nil)
+            
+            EventStatisticsApi.shareApi.uploadEventInfo(ActivityEventType.BandConnect)
+        }
         
     }
     
     func centralManager(central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: NSError?) {
         NSNotificationCenter.defaultCenter().postNotificationName(BandBleNotificationName.BandDesconnectNotification.rawValue, object: nil)
+        EventStatisticsApi.shareApi.uploadEventInfo(ActivityEventType.BandDisconnect)
     }
     
     func centralManager(central: CBCentralManager, didFailToConnectPeripheral peripheral: CBPeripheral, error: NSError?) {

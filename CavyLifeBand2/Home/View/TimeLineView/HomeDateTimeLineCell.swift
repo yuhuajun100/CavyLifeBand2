@@ -36,7 +36,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
         // 接收通知
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(changeStepNumber), name: NumberFollowUpper.FollowUpperStep.rawValue, object: nil)
         
-//        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(changeSleepNumber), name: NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
+        //        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(changeSleepNumber), name: NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
     }
     
     deinit {
@@ -95,40 +95,50 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
      - returns:
      */
     func initNotificationSleep() {
-
+        
         guard let curDate = NSDate(fromString: timeString, format: "yyyy.M.d") else {
             fatalError("时间格式不正确\(timeString)")
         }
         
         let endDate = curDate.gregorian.isToday ? NSDate().timeStringChangeToNSDate(.Day).1 : curDate.timeStringChangeToNSDate(.Day).1
-
+        
         Log.info("\(curDate.toString(format: "yyyy.M.d HH:mm:ss")) -------- \(endDate.toString(format: "yyyy.M.d HH:mm:ss"))")
         
-        notificationSleepToken = self.queryAllStepInfo(userId).addNotificationBlock { [unowned self] chage in
+        guard let sleepRealmReslut: Results<(SleepWebRealm)> = queryUserSleepWebRealm() else {
+            
+            return
+        }
+        
+        notificationSleepToken = sleepRealmReslut.addNotificationBlock { [unowned self] chage in
             
             switch chage {
                 
             case .Initial(_):
                 
-                let sleepTime = self.queryHomeData(self.timeString).last?.totalStepTime ?? 0
+                let sleepTime = self.queryHomeData(self.timeString).last?.totalSleep ?? 0
                 self.datasViewModels[1] = HomeListSleepViewModel(sleepTime: sleepTime)
                 if self.timeString == NSDate().toString(format: "yyyy.M.d") {
                     
-                    let resultSeelp = self.querySleepInfoDay(NSDate().gregorian.beginningOfDay.date, endTime: NSDate().timeStringChangeToNSDate(.Day).1)
-                    let sleepCurrentNumber = Int(resultSeelp.0 * 10)
+                    
+                    let sleepInfo = self.querySleepNumber(NSDate().gregorian.beginningOfDay.date, endTime:NSDate()).first
+                    let resultSeelp = (sleepInfo!.lightSleep + sleepInfo!.deepSleep) ?? 0
+                    let sleepCurrentNumber = resultSeelp
+
                     self.datasViewModels[1] = HomeListSleepViewModel(sleepTime: sleepCurrentNumber)
                     
                 }
                 self.tableView.reloadData()
-         
+                
             case .Update(_, deletions: _, insertions: _, modifications: _):
-
-                let sleepTime = self.queryHomeData(self.timeString).last?.totalStepTime ?? 0
+                
+                let sleepTime = self.queryHomeData(self.timeString).last?.totalSleep ?? 0
                 self.datasViewModels[1] = HomeListSleepViewModel(sleepTime: sleepTime)
                 if self.timeString == NSDate().toString(format: "yyyy.M.d") {
                     
-                    let resultSeelp = self.querySleepInfoDay(NSDate().gregorian.beginningOfDay.date, endTime: NSDate().timeStringChangeToNSDate(.Day).1)
-                    let sleepCurrentNumber = Int(resultSeelp.0 * 10)
+                    let sleepInfo = self.querySleepNumber(NSDate().gregorian.beginningOfDay.date, endTime:NSDate()).first
+                    let resultSeelp = (sleepInfo!.lightSleep + sleepInfo!.deepSleep) ?? 0
+                    let sleepCurrentNumber = resultSeelp
+
                     self.datasViewModels[1] = HomeListSleepViewModel(sleepTime: sleepCurrentNumber)
                     
                 }
@@ -153,7 +163,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
      - returns:
      */
     func initNotificationStep() {
-
+        
         notificationStepToken = self.queryAllStepInfo(userId).addNotificationBlock { [unowned self] chage in
             
             switch chage {
@@ -162,7 +172,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
                 
                 let steps = self.queryHomeData(self.timeString).last?.totalSteps ?? 0
                 self.datasViewModels[0] = HomeListStepViewModel(stepNumber: steps)
-
+                
                 if self.timeString == NSDate().toString(format: "yyyy.M.d") {
                     
                     let resultStep = self.queryStepNumber(NSDate().gregorian.beginningOfDay.date, endTime: NSDate(), timeBucket: .Day)
@@ -172,7 +182,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
                     
                 }
                 self.tableView.reloadData()
-        
+                
             case .Update(_, deletions: _, insertions: _, modifications: _):
                 
                 let steps = self.queryHomeData(self.timeString).last?.totalSteps ?? 0
@@ -187,7 +197,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
                     
                 }
                 self.tableView.reloadData()
-      
+                
             default:
                 break
                 
@@ -197,7 +207,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
         }
         
     }
-
+    
     func addCollectionView() {
         
         tableView.backgroundColor = UIColor.whiteColor()
@@ -223,18 +233,21 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
     func parseDataToHomeListRealm(){
         
         // 如果数据库存在数据 就直接返回
+        
         if isExistHomeData(timeString) { return }
         
         // 不存在 解析数据 并保存
         HomeWebApi.shareApi.parserHomeLineData(timeString)
+        
     }
     
-
+    
     /**
      数据库数据 转换 VM数组
      */
+    
     func queryRealmGetViewModelLists(homeListRealm: Results<(HomeLineRealm)>) -> [HomeListViewModelProtocol] {
-
+        
         // 转成 VM数组
         var listVM: [HomeListViewModelProtocol] = [HomeListStepViewModel(stepNumber: 0), HomeListSleepViewModel(sleepTime: 0)]
         
@@ -243,9 +256,11 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
         }
         
         if homeListRealm.first == NSDate().toString(format: "yyyy.M.d") {
+          
+            let sleepInfo = querySleepNumber(NSDate().gregorian.beginningOfDay.date, endTime:NSDate()).first
+            let resultSeelp = (sleepInfo!.lightSleep + sleepInfo!.deepSleep) ?? 0
+            let sleepCurrentNumber = resultSeelp
             
-            let resultSeelp = self.querySleepInfoDay(NSDate().gregorian.beginningOfDay.date, endTime: NSDate().timeStringChangeToNSDate(.Day).1)
-            let sleepCurrentNumber = Int(resultSeelp.0 * 10)
             let resultStep = queryStepNumber(NSDate().gregorian.beginningOfDay.date, endTime: NSDate(), timeBucket: .Day)
             let stepCurrentNumber = resultStep.totalStep
             
@@ -261,7 +276,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
             
         }
         
-
+        
         
         // 成就列表
         if listRealm.awards.count > 0 {
@@ -273,33 +288,33 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
         }
         
         // 隐藏PK模块
-//        // PK
-//        if listRealm.pkList.count > 0 {
-//
-//            for list in listRealm.pkList {
-//                
-//                // PK状态：1:进行中 2：已完成
-//                let pkStaus = list.status == 1 ? L10n.PKRecordsVCDueSectionTitle.string : L10n.PKRecordsVCFinishSectionTitle.string
-//                listVM.append(HomeListPKViewModel(friendName: list.friendName, pkId: list.pkId, result: pkStaus))
-//            }
-//            
-//        }
-//        // 成就列表
-//        if listRealm.achieveList.count > 0 {
-//            
-//            for list in listRealm.achieveList {
-//                
-//                listVM.append(HomeListAchiveViewModel(medalIndex: list.achieve))
-//            }
-//        }
-//        // 健康列表
-//        if listRealm.healthList.count > 0 {
-//            
-//            for list in listRealm.healthList {
-//                listVM.append(HomeListHealthViewModel(othersName: list.friendName, iconUrl: list.iconUrl, friendId: list.friendId))
-//            }
-//        }
-
+        //        // PK
+        //        if listRealm.pkList.count > 0 {
+        //
+        //            for list in listRealm.pkList {
+        //                
+        //                // PK状态：1:进行中 2：已完成
+        //                let pkStaus = list.status == 1 ? L10n.PKRecordsVCDueSectionTitle.string : L10n.PKRecordsVCFinishSectionTitle.string
+        //                listVM.append(HomeListPKViewModel(friendName: list.friendName, pkId: list.pkId, result: pkStaus))
+        //            }
+        //            
+        //        }
+        //        // 成就列表
+        //        if listRealm.achieveList.count > 0 {
+        //            
+        //            for list in listRealm.achieveList {
+        //                
+        //                listVM.append(HomeListAchiveViewModel(medalIndex: list.achieve))
+        //            }
+        //        }
+        //        // 健康列表
+        //        if listRealm.healthList.count > 0 {
+        //            
+        //            for list in listRealm.healthList {
+        //                listVM.append(HomeListHealthViewModel(othersName: list.friendName, iconUrl: list.iconUrl, friendId: list.friendId))
+        //            }
+        //        }
+        
         return listVM
     }
     
@@ -322,18 +337,18 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
     /**
      接受通知更新睡眠值
      */
-//    func changeSleepNumber() {
-//        
-//        guard let curDate = NSDate(fromString: timeString, format: "yyyy.M.d") else {
-//            fatalError("时间格式不正确\(timeString)")
-//        }
-//        
-//        let endDate = curDate.gregorian.isToday ? NSDate() : (curDate.gregorian.beginningOfDay + 24.hour).date
-//
-//        self.datasViewModels[1] = HomeListSleepViewModel(sleepTime: Int(self.querySleepInfoDay(curDate, endTime: endDate).0))
-//        self.tableView.reloadData()
-//        
-//    }
+    //    func changeSleepNumber() {
+    //        
+    //        guard let curDate = NSDate(fromString: timeString, format: "yyyy.M.d") else {
+    //            fatalError("时间格式不正确\(timeString)")
+    //        }
+    //        
+    //        let endDate = curDate.gregorian.isToday ? NSDate() : (curDate.gregorian.beginningOfDay + 24.hour).date
+    //
+    //        self.datasViewModels[1] = HomeListSleepViewModel(sleepTime: Int(self.querySleepInfoDay(curDate, endTime: endDate).0))
+    //        self.tableView.reloadData()
+    //        
+    //    }
     
 }
 
@@ -358,24 +373,19 @@ extension HomeDateTimeLineCell {
         }
         
         return sectionView
-
+        
     }
     
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         
-        return 66
+        return 75
     }
     
     func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
-        if section == 0 {
-            
-            return 16
-        }
-        
-        return 10
+        return 1
     }
-
+    
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         return 1
@@ -384,18 +394,6 @@ extension HomeDateTimeLineCell {
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCellWithIdentifier("HomeTimeLineTableCell", forIndexPath: indexPath) as! HomeTimeLineTableCell
-
-        cell.headLine.hidden = false
-        cell.bottomLine.hidden = false
-
-        if indexPath.section == 0 {
-            cell.headLine.hidden = true
-        }
-
-        if indexPath.section == datasViewModels.count - 1 {
-            
-            cell.bottomLine.hidden = true
-        }
         
         let viewModel = datasViewModels[indexPath.section]
         
@@ -407,26 +405,7 @@ extension HomeDateTimeLineCell {
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         
         datasViewModels[indexPath.section].onClickCell()
-
+        
     }
     
-    /**
-     section不悬浮
-     */
-    func scrollViewDidScroll(scrollView: UIScrollView) {
-        
-        let sectionHeight: CGFloat = 16
-        
-        if scrollView.contentOffset.y <= sectionHeight && scrollView.contentOffset.y >= 0{
-            
-            scrollView.contentInset = UIEdgeInsetsMake(-scrollView.contentOffset.y, 0, 0, 0)
-            
-        } else if scrollView.contentOffset.y >= sectionHeight {
-            
-            scrollView.contentInset = UIEdgeInsetsMake(-sectionHeight, 0, 0, 0)
-            
-        }
-
-    }
-
 }

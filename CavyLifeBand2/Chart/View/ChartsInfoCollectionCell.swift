@@ -12,7 +12,7 @@ import Realm
 import RealmSwift
 
 class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserInfoRealmOperateDelegate {
-
+    
     var viewStyle: ChartViewStyle = .StepChart
     var timeBucketStyle: TimeBucketStyle = .Day
     
@@ -20,14 +20,14 @@ class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserI
     
     /// 时间标签的String
     var timeString: String = ""
-
+    
     // 图标视图
     var chartsView = UIView()
     /// 列表展示信息
     var listView: UITableView?
     
     // 列表展示数据值
-    var listDataArray: [String] = []
+    var attrsArray: [NSAttributedString] = []
     
     var realm: Realm = try! Realm()
     var userId: String = CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId
@@ -72,9 +72,10 @@ class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserI
             let chartView = ShowChartsView()
             chartView.timeBucketStyle = self.timeBucketStyle
             
-            let stepRealms =  queryStepNumber(time.beginTime, endTime: time.endTime, timeBucket: timeBucketStyle)
+            let stepRealms = queryStepNumber(time.beginTime, endTime: time.endTime, timeBucket: timeBucketStyle)
             
-            listDataArray = infoViewStepListArray(stepRealms)
+            attrsArray = infoViewStepListAttributeArray(stepRealms)
+            
             listView?.reloadData()
             chartView.chartsData = stepRealms.datas
             
@@ -82,14 +83,15 @@ class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserI
             chartView.configAllView()
             
         }
-
+        
         if viewStyle == .SleepChart && timeBucketStyle == .Day {
             
             let sleepInfo = querySleepNumber(time.beginTime, endTime: time.endTime)
-                        
-            listDataArray = infoViewSleepListArray(sleepInfo)
             
-            let peiChartView = ShowPieChartsView(frame: CGRectMake(0, 0, 0, 0), deepSleep: sleepInfo.first!.deepSleep, lightSleep: sleepInfo.first!.lightSleep)
+            attrsArray = infoViewSleepListAttrributeArray(sleepInfo)
+            
+            let peiChartView = ShowPieChartsView(frame: CGRectMake(0, 0, 0, 0), deepSleep: Int(sleepInfo.first?.deepSleep ?? 0), lightSleep: sleepInfo.first?.lightSleep ?? 0)
+            
             chartViewLayout(peiChartView)
             
         }
@@ -100,7 +102,7 @@ class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserI
             
             let sleepInfo = querySleepNumber(time.beginTime, endTime: time.endTime)
             
-            listDataArray = infoViewSleepListArray(sleepInfo)
+            attrsArray = infoViewSleepListAttrributeArray(sleepInfo)
             
             stackChart.timeBucketStyle = self.timeBucketStyle
             
@@ -120,14 +122,14 @@ class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserI
      添加tableView
      */
     func addInfoTableView() {
-
+        
         let listViewHeight = listcellHight * CGFloat(listCount)
         listView = UITableView()
         listView!.separatorInset = UIEdgeInsetsMake(0, 20, 0, 20)
         listView!.separatorStyle = .SingleLine
         listView!.separatorColor = UIColor(named: .LColor)
         listView!.backgroundColor = UIColor.whiteColor()
-
+        
         self.addSubview(listView!)
         
         listView!.snp_makeConstraints { make in
@@ -142,7 +144,7 @@ class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserI
         
         listView!.registerNib(UINib(nibName: "ChartInfoListCell", bundle: nil), forCellReuseIdentifier: "ChartInfoListCell")
         listView!.registerNib(UINib(nibName: "ChartSleepInfoCell", bundle: nil), forCellReuseIdentifier: "ChartSleepInfoCell")
-
+        
     }
     
     /**
@@ -153,21 +155,61 @@ class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserI
         chartsView.addSubview(view)
         
         view.snp_makeConstraints { make in
-            make.edges.equalTo(UIEdgeInsets(top: chartTopHeigh / 2 - 5, left: insetSpace, bottom: -(chartBottomHeigh / 2 - 5), right: -insetSpace))
+            make.edges.equalTo(UIEdgeInsets(top: chartTopHeigh / 2 - 5, left: insetSpace / 2, bottom: -(chartBottomHeigh / 2 - 5), right: -insetSpace / 2))
         }
+        
+        // 添加计步 右上角的legend
+        if viewStyle == .StepChart {
+            
+            let label = UILabel()
+            chartsView.addSubview(label)
+            label.snp_makeConstraints { make in
+                make.top.equalTo(0).offset(chartTopHeigh / 2)
+                make.right.equalTo(0).offset(-insetSpace)
+            }
+            label.text = L10n.ChartStepTodayStep.string
+            label.font = UIFont.systemFontOfSize(12)
+            label.textColor = UIColor.whiteColor()
+            
+        }
+        
+        // 添加睡眠 右上角的legend
+        if viewStyle == .SleepChart {
+            
+            let sleepLegend = NSBundle.mainBundle().loadNibNamed("ChartsSleepLegendView", owner: nil, options: nil).first as? ChartsSleepLegendView
+            chartsView.addSubview(sleepLegend!)
+            sleepLegend!.snp_makeConstraints { make in
+                make.top.equalTo(0).offset(chartTopHeigh / 2 - 5)
+                make.right.equalTo(0).offset(-insetSpace)
+            }
+            
+        }
+        
     }
     
     /**
-     Charts计步详情页面 下面的TableView的cell上数值的 Array
+     返回富文本Array
      */
-    private func infoViewStepListArray(stepRealm: StepChartsData) -> [String]{
-       
-        var resultArray: [String] = []
+    private func infoViewStepListAttributeArray(stepRealm: StepChartsData) -> [NSAttributedString]{
+        
+        var resultArray: [NSAttributedString] = []
         var percent = 0
-        let minutes = stepRealm.finishTime
-
+        
         guard let userInfo: UserInfoModel = queryUserInfo(userId) else {
-            return ["0", "0", "0", "0\(L10n.HomeSleepRingUnitMinute.string)"]
+            
+            var attrs: [NSAttributedString] = []
+            
+            attrs.append(String(0).detailAttributeString(L10n.GuideStep.string))
+            
+            attrs.append(String(0).detailAttributeString("km"))
+            if timeBucketStyle == .Day {
+                attrs.append(String(0).detailAttributeString("%"))
+            } else {
+                attrs.append(String(0).detailAttributeString(L10n.GuideStep.string))
+            }
+            attrs.append(0.detailTimeAttributeString())
+            
+            return attrs
         }
         
         var stepTargetNumber = userInfo.stepGoal
@@ -177,58 +219,65 @@ class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserI
         }
         
         percent = stepRealm.totalStep * 100 / stepTargetNumber
+        
         if percent > 100 {
             percent = 100
         }
         
-        let hour = minutes / 60
-        let min = minutes - hour * 60
-        
         let kilometer = String(format: "%.1f", stepRealm.totalKilometer)
-        resultArray.append("\(stepRealm.totalStep)\(L10n.GuideStep.string)")
-        resultArray.append("\(kilometer)km")
-        // 日:完成度 周&月:日均步数 
+        resultArray.append(String(stepRealm.totalStep).detailAttributeString(L10n.GuideStep.string))
+        resultArray.append(String(kilometer).detailAttributeString("km"))
+        
+        
+        // 日:完成度 周&月:日均步数
         switch timeBucketStyle {
         case .Day:
             
-            resultArray.append("\(percent)%")
+            resultArray.append(String(percent).detailAttributeString("%"))
             
         case .Week, .Month:
             
-            resultArray.append("\(stepRealm.totalStep / 30)\(L10n.GuideStep.string)")
-
+            resultArray.append(String(stepRealm.averageStep).detailAttributeString(L10n.GuideStep.string))
         }
         
-        resultArray.append("\(hour)\(L10n.HomeSleepRingUnitHour.string)\(min)\(L10n.HomeSleepRingUnitMinute.string)")
-
+        resultArray.append(stepRealm.finishTime.detailTimeAttributeString())
+        
         return resultArray
     }
     
+    
     /**
-     Charts睡眠详情页面 下面的TableView的cell上数值的 Array
+     睡眠富文本数组
      */
-    private func infoViewSleepListArray(sleepInfo: [PerSleepChartsData]) -> [String] {
+    private func infoViewSleepListAttrributeArray(sleepInfo: [PerSleepChartsData]) -> [NSAttributedString] {
         
-        var resultArray: [String] = []
+        var resultArray: [NSAttributedString] = []
         
+        // 有数据的天数
+        var avgIndex = 0
         var percent = 0
         
+        var deepSleep: Int  = 0
+        var lightSleep: Int = 0
+        
         guard let userInfo: UserInfoModel = queryUserInfo(userId) else {
-            return ["0\(L10n.HomeSleepRingUnitMinute.string)", "0\(L10n.HomeSleepRingUnitMinute.string)", "0%"]
+            
+            var attrs: [NSAttributedString] = []
+            
+            attrs.append(0.detailTimeAttributeString())
+            attrs.append(0.detailTimeAttributeString())
+            attrs.append(0.detailTimeAttributeString())
+            
+            return attrs
         }
         
         var sleepTarge = userInfo.sleepGoal
-
+        
         if sleepTarge == 0 {
             
             sleepTarge = 500
             
         }
-        // 有数据的天数
-        var avgIndex = 0
-        
-        var deepSleep: Int  = 0
-        var lightSleep: Int = 0
         
         for perData in sleepInfo {
             
@@ -240,49 +289,95 @@ class ChartsInfoCollectionCell: UICollectionViewCell, ChartsRealmProtocol, UserI
             
         }
         if avgIndex == 0 { avgIndex = 1 }
-
+        
         let sleepCur = deepSleep + lightSleep
         
         // 60% 格式 所以 * 100
         if sleepTarge != 0 && timeBucketStyle == .Day {
-    
+            
             percent = sleepCur * 100 / sleepTarge
-   
+            
         }
         
         if percent > 100 {
             percent = 100
         }
         
-        resultArray.append("\(lightSleep / 60)\(L10n.HomeSleepRingUnitHour.string)\(lightSleep % 60)\(L10n.HomeSleepRingUnitMinute.string)")
-        resultArray.append("\(deepSleep / 60)\(L10n.HomeSleepRingUnitHour.string)\(deepSleep % 60)\(L10n.HomeSleepRingUnitMinute.string)")
+        resultArray.append(lightSleep.detailTimeAttributeString())
+        resultArray.append(deepSleep.detailTimeAttributeString())
         
         // 日:完成度 周&月:日均步数
         switch timeBucketStyle {
             
         case .Day:
             
-            resultArray.append("\(percent)%")
+            resultArray.append(String(percent).detailAttributeString("%"))
             
         case .Week, .Month:
             
             let avgSleepTime = sleepCur / avgIndex
-
-            resultArray.append("\(avgSleepTime / 60)\(L10n.HomeSleepRingUnitHour.string)\(avgSleepTime % 60)\(L10n.HomeSleepRingUnitMinute.string)")
             
-
+            resultArray.append(avgSleepTime.detailTimeAttributeString())
+            
         }
         
         return resultArray
     }
-
+    
+    
+    /**
+     - parameter sleepInfo: (总的睡眠时间,浅睡, 深睡)
+     
+     - returns: 当天的数据
+////     */
+    private func infoViewSleepListAttrributeArray(sleepInfo: (Double, Double, Double)) -> [NSAttributedString] {
+        
+        
+        var resultArray: [NSAttributedString] = []
+   
+        
+        guard let userInfo: UserInfoModel = queryUserInfo(userId) else {
+            
+            var attrs: [NSAttributedString] = []
+            
+            attrs.append(0.detailTimeAttributeString())
+            attrs.append(0.detailTimeAttributeString())
+            attrs.append(0.detailTimeAttributeString())
+            
+            return attrs
+        }
+        
+        var sleepTarge = userInfo.sleepGoal
+        
+        if sleepTarge == 0 {
+            
+            sleepTarge = 500
+            
+        }
+        
+      
+       var  percent = Int(sleepInfo.0  / Double(sleepTarge) * 100)
+        
+        if percent > 100 {
+            percent = 100
+        }
+        
+        resultArray.append(Int(sleepInfo.2).detailTimeAttributeString())
+        resultArray.append(Int(sleepInfo.1).detailTimeAttributeString())
+        resultArray.append(String(percent).detailAttributeString("%"))
+            
+        return resultArray
+        
+        
+    }
+    
 }
 
 // MARK: -- UITableViewDelegate
 extension ChartsInfoCollectionCell: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-  
+        
         return listCount
         
     }
@@ -293,10 +388,10 @@ extension ChartsInfoCollectionCell: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-
+        
         
         var dataStepArray: [String] = [L10n.ChartStepTodayStep.string, L10n.ChartStepKilometer.string, L10n.ChartTargetPercent.string, L10n.ChartStepTimeUsed.string]
-
+        
         switch timeBucketStyle {
             
         case .Week:
@@ -304,10 +399,10 @@ extension ChartsInfoCollectionCell: UITableViewDelegate, UITableViewDataSource {
         case .Month:
             
             dataStepArray = [L10n.ChartStepMonthStep.string, L10n.ChartStepKilometer.string, L10n.ChartStepAverageStep.string, L10n.ChartStepTimeUsed.string]
-
+            
         default:
             dataStepArray = [L10n.ChartStepTodayStep.string, L10n.ChartStepKilometer.string, L10n.ChartTargetPercent.string, L10n.ChartStepTimeUsed.string]
-
+            
             
         }
         
@@ -322,7 +417,8 @@ extension ChartsInfoCollectionCell: UITableViewDelegate, UITableViewDataSource {
                 let cell = tableView.dequeueReusableCellWithIdentifier("ChartSleepInfoCell", forIndexPath: indexPath) as! ChartSleepInfoCell
                 
                 cell.configSleepCell(sleepStatusArray[indexPath.row], text: "8")
-                cell.rightLabel.text = listDataArray[indexPath.row]
+                
+                cell.rightLabel.attributedText = attrsArray[indexPath.row]
                 
                 return cell
                 
@@ -337,8 +433,8 @@ extension ChartsInfoCollectionCell: UITableViewDelegate, UITableViewDataSource {
                 cell.leftLabel.text = L10n.ChartSleepAverage.string
             }
             
-            cell.rightLabel.text = listDataArray[indexPath.row]
-           
+            cell.rightLabel.attributedText = attrsArray[indexPath.row]
+            
             return cell
             
         case .StepChart:
@@ -346,10 +442,10 @@ extension ChartsInfoCollectionCell: UITableViewDelegate, UITableViewDataSource {
             let cell = tableView.dequeueReusableCellWithIdentifier("ChartInfoListCell", forIndexPath: indexPath) as! ChartInfoListCell
             cell.leftLabel.text = dataStepArray[indexPath.row]
             
-            cell.rightLabel.text = listDataArray[indexPath.row]
+            cell.rightLabel.attributedText = attrsArray[indexPath.row]
             
             return cell
-
+            
         }
         
     }

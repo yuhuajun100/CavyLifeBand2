@@ -54,7 +54,7 @@ extension QueryUserInfoRequestsDelegate {
 protocol SetUserInfoRequestsDelegate {
     
     var userInfoPara: [String: AnyObject] { get set }
-    
+
     func setUserInfo(completeHandle: (Bool -> Void)?)
     
     var viewController: UIViewController? { get }
@@ -66,6 +66,7 @@ extension SetUserInfoRequestsDelegate {
     
     var viewController: UIViewController? { return nil }
     
+    
     /**
      设置用户信息
      
@@ -73,7 +74,7 @@ extension SetUserInfoRequestsDelegate {
      */
     func setUserInfo(completeHandle: (Bool -> Void)? = nil) {
         
-        let parameters: [String: AnyObject] = [NetRequsetKey.Profile.rawValue: userInfoPara]
+        let parameters: [String: AnyObject] = [NetRequestKey.Profile.rawValue: userInfoPara]
 
         NetWebApi.shareApi.netPostRequest(WebApiMethod.UsersProfile.description, para: parameters, modelObject: CommenMsgResponse.self, successHandler: { (data) in
             

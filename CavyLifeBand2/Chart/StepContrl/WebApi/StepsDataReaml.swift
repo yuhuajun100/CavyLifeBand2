@@ -60,7 +60,8 @@ protocol ChartStepRealmProtocol {
     func queryAllStepInfo(userId: String) -> Results<(NChartStepDataRealm)>?
     func delecNSteptDate(beginTime: NSDate, endTime: NSDate) -> Bool
     func addStepData(chartStepInfo: NChartStepDataRealm) -> Bool
-    func queryNStepNumber(beginTime: NSDate, endTime: NSDate, timeBucket: TimeBucketStyle) -> StepChartsData
+    func delecNSteptDate(chartStepInfo: NChartStepDataRealm) -> Bool
+    func queryNStepNumber(beginTime: NSDate, endTime: NSDate, timeBucket: TimeBucketStyle) -> StepChartsData?
     
 }
 
@@ -92,6 +93,36 @@ extension ChartStepRealmProtocol {
             self.realm.delete(data)
         }
         
+        do {
+            
+            try self.realm.commitWrite()
+            
+        } catch let error {
+            
+            Log.error("\(#function) error = \(error)")
+            
+            return false
+        }
+        Log.info("delete charts info success")
+        
+        return true
+        
+    }
+    
+    /**
+     删除某一条数据
+     
+     - parameter chartStepInfo: <#chartStepInfo description#>
+     
+     - returns: <#return value description#>
+     */
+    
+    func delecNSteptDate(chartStepInfo: NChartStepDataRealm) -> Bool {
+        
+        self.realm.beginWrite()
+        
+        self.realm.delete(chartStepInfo)
+    
         do {
             
             try self.realm.commitWrite()
@@ -184,7 +215,7 @@ extension ChartStepRealmProtocol {
     /**
      查询 日周月下 某一时段的 数据信息
      */
-    func queryNStepNumber(beginTime: NSDate, endTime: NSDate, timeBucket: TimeBucketStyle) -> StepChartsData {
+    func queryNStepNumber(beginTime: NSDate, endTime: NSDate, timeBucket: TimeBucketStyle) -> StepChartsData? {
         
         let today = endTime.gregorian.isToday
         // 判断是否是当然 如果是当天 则查询日期往前推一天
@@ -202,14 +233,25 @@ extension ChartStepRealmProtocol {
         
         //转换时间格式
         
-    let dataInfo = realm.objects(NChartStepDataRealm).filter("userId == '\(userId)' AND date >= %@ AND date <= %@", NSDate().formartDate(beginTime), NSDate().formartDate(scanTime))
+    let dataInfo = realm.objects(NChartStepDataRealm).filter("userId == '\(userId)' AND date => %@ AND date <= %@", beginTime.gregorian.beginningOfDay.date, scanTime.gregorian.beginningOfDay.date)
+        
+        Log.info("\(dataInfo.count)")
+        print("=============\(dataInfo.count)==============")
         
         switch timeBucket {
             
         case .Day:
-            return returnHourChartsArray(dataInfo)
+            
+            if today {
+                return returnHourChartsArray(nil)
+            }else{
+                return returnHourChartsArray(dataInfo)
+            }
+            
+            
             
         case .Week, .Month:
+            
             return returnDayChartsArray(beginTime, endTime: endTime, dataInfo: dataInfo)
             
         }
@@ -221,7 +263,13 @@ extension ChartStepRealmProtocol {
     /**
      按小时分组 一天24小时
      */
-    func returnHourChartsArray(dataInfo: Results<(NChartStepDataRealm)>) -> StepChartsData {
+    func returnHourChartsArray(dataInfo: Results<(NChartStepDataRealm)>?) -> StepChartsData? {
+        
+        
+        guard let newData = dataInfo else {
+            
+            return nil
+        }
         
         var stepChartsData = StepChartsData(datas: [], totalStep: 0, totalKilometer: 0, finishTime: 0, averageStep: 0)
         
@@ -230,18 +278,20 @@ extension ChartStepRealmProtocol {
             
             stepChartsData.datas.append(PerStepChartsData(time: "\(i)", step: 0))
         }
-
         
-        for data in dataInfo {
-           let index = data.date.gregorian.components.hour
+        for data in newData {
+          
             stepChartsData.totalStep = data.totalStep
             stepChartsData.totalKilometer = data.kilometer
             stepChartsData.finishTime = data.totalTime
             stepChartsData.averageStep = data.totalStep
             
+            var index: Int = 0
             for step in data.stepList {
                 
-                stepChartsData.datas[index].step = step.step
+                index += 1
+                stepChartsData.datas[index - 1].step = step.step
+                
             }
             
         
@@ -269,8 +319,13 @@ extension ChartStepRealmProtocol {
         
         var averageStepCount = 0
         
-        for data in dataInfo {
-            
+        var indext = 0
+        
+        let dataInfoArr = completeStepData(beginTime, endTime: endTime, dataInfo: dataInfo)
+        
+        for data in dataInfoArr {
+           
+            indext += 1
             stepChartsData.totalKilometer += data.kilometer
             stepChartsData.totalStep += data.totalStep
             stepChartsData.finishTime += data.totalTime
@@ -283,13 +338,13 @@ extension ChartStepRealmProtocol {
                 averageStepCount += 1
             }
             
-           
-            for step in data.stepList {
+            
+            if indext - 1 < maxNum   {
                 
-            let index = (data.date - beginTime).components.day
-            stepChartsData.datas[index].step += step.step
-                
+                 stepChartsData.datas[indext - 1].step = data.totalStep
             }
+           
+            
         }
         
         if averageStepCount == 0 {
@@ -306,29 +361,42 @@ extension ChartStepRealmProtocol {
         
     }
     
+    
+    /**
+     数据补齐操作
+     
+     - parameter beginTime: <#beginTime description#>
+     - parameter endTime:   <#endTime description#>
+     
+     - returns: <#return value description#>
+     */
+    
+    func completeStepData(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>) -> [NChartStepDataRealm]{
+       
+         let maxNum = (NSDate().gregorian.date - beginTime).totalDays + 1
+         let infoCount = dataInfo.count
+         var resultDataArr: [NChartStepDataRealm] = []
+        
+        if infoCount < maxNum {
+           
+            for _ in 0..<(maxNum - infoCount) {
+                
+                resultDataArr.append(NChartStepDataRealm())
+            }
+            
+        }
+        
+        for data in dataInfo {
+            
+            resultDataArr.append(data)
+        }
+        
+        
+        return resultDataArr
+    }
+    
+    
 }
-
-
-
-
-
-
-
-
-/**
- *  Step 整个数据 包括总步数 总公里数 花费时长 平均时长
- */
-
-//struct StepShowItem {
-//    
-//    var totalStep: Int          = 0
-//    var totalKilometer: CGFloat = 0.0
-//    var spendTime: Int
-//    var averageStep: Int        = 0
-//    var datas: [Int]
-//  
-//}
-
 
 
 

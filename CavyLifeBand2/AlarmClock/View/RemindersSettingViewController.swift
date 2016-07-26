@@ -106,7 +106,6 @@ class RemindersSettingViewController: UIViewController, BaseViewControllerPresen
         
         tableView.layer.cornerRadius = CavyDefine.commonCornerRadius
         tableView.backgroundColor = UIColor.whiteColor()
-        
         tableView.snp_makeConstraints { make in
             make.trailing.equalTo(self.view).offset(-tableViewMargin)
             make.leading.equalTo(self.view).offset(tableViewMargin)

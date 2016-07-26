@@ -47,7 +47,7 @@ struct UpdateFWViewModel: MenuProtocol, FirmwareDownload {
     var nextView: UIViewController? = nil
     var filePath: String = ""
     var titleColor: UIColor = UIColor.whiteColor()
-    
+
     
     init(icon: UIImage? = nil, title: String, titleColor: UIColor) {
         
@@ -62,41 +62,74 @@ struct UpdateFWViewModel: MenuProtocol, FirmwareDownload {
      */
     func onClickCell() {
         
-        // 如果手环没连接，return
-        if LifeBandBle.shareInterface.getConnectState() != .Connected {
-            CavyLifeBandAlertView.sharedIntance.showViewTitle(message: L10n.UpdateFirmwareBandDisconnectAlertMsg.string)
-            return
-        }
+        let requestAlert = UIAlertController(title: "", message: L10n.UpdateFirmwareCheckVersionAlertMsg.string, preferredStyle: .Alert)
         
-        let updateView = UpdateProgressView.show()
+        UIApplication.sharedApplication().keyWindow?.rootViewController?.presentViewController(requestAlert, animated: true, completion: nil)
         
-        // TODO 接口和手环版本格式改好后放开注释
-        
-        // 固件版本校验
+        // 获取手环版本信息
         LifeBandCtrl.shareInterface.getLifeBandInfo { bandInfo in
-            
-//            self.downloadAndUpdateFW(testFile31, updateView: updateView)
             
             let fwVersion = bandInfo.fwVersion
             let hwVersion = bandInfo.hwVersion
             
             let localVersion = "\(hwVersion)" + "." + "\(fwVersion)"
             
+            // 获取服务器最新固件版本信息
             NetWebApi.shareApi.netGetRequest(WebApiMethod.Firmware.description, modelObject: FirmwareUpdateResponse.self, successHandler: { (data) in
+                
+                requestAlert.dismissVC(completion: nil)
+                
                 let localIsLast = localVersion.compare(data.data.version, options: .NumericSearch, range: nil, locale: nil) == .OrderedDescending
                 
                 guard localIsLast == false else {
-                    UpdateProgressView.hide()
                     CavyLifeBandAlertView.sharedIntance.showViewTitle(message: L10n.UpdateFirmwareIsNewVersionAlertMsg.string)
                     return
                     
                 }
                 
-                self.downloadAndUpdateFW(data.data.url, updateView: updateView)
+                let title = L10n.UpdateFirmwareInstallNewVersionAlertTitle.string + "（\(data.data.version)）"
                 
+                let versionAlert = UIAlertController(title: title, message: data.data.description, preferredStyle: .Alert)
+                
+                let cancelAction = UIAlertAction(title: L10n.AlertCancelActionTitle.string, style: .Cancel) { (action) in }
+                
+                let updateAction = UIAlertAction(title: L10n.AlertUpdateActionTitle.string, style: .Default) { (action) in
+                    
+                    // 检测电量是否足够
+                    LifeBandCtrl.shareInterface.getBandElectric { electric in
+                        
+                        guard electric >= 0.2 else {
+                            
+                            let electricAlert = UIAlertController(title: L10n.UpdateFirmwareLowElectricAlertTitle.string,
+                                message: L10n.UpdateFirmwareLowEleAlertMsg.string, preferredStyle: .Alert)
+                            
+                            let cancelAction = UIAlertAction(title: L10n.AlertReTryAfterChargeActionTitle.string, style: .Cancel) { (action) in }
+                            
+                            electricAlert.addAction(cancelAction)
+                            
+                            UIApplication.sharedApplication().keyWindow?.rootViewController?.presentViewController(electricAlert, animated: true, completion: nil)
+                            
+                            return
+                        }
+                        
+                        let updateView = UpdateProgressView.show()
+                        self.downloadAndUpdateFW(data.data.url, updateView: updateView)
+                        
+                    }
+                    
+                }
+                
+                versionAlert.addAction(cancelAction)
+                versionAlert.addAction(updateAction)
+                
+                UIApplication.sharedApplication().keyWindow?.rootViewController?.presentViewController(versionAlert, animated: true, completion: nil)
+
             }) { (msg) in
-                UpdateProgressView.hide()
+                
+                requestAlert.dismissVC(completion: nil)
+                
                 CavyLifeBandAlertView.sharedIntance.showViewTitle(message: msg.msg)
+                
             }
             
         }
@@ -110,9 +143,21 @@ struct UpdateFWViewModel: MenuProtocol, FirmwareDownload {
      */
     func downloadAndUpdateFW(downLoadUrl: String, updateView: UpdateProgressView) {
         
-        // TODO 改成传来的url
+        // 下载服务器的固件
         self.downloadFirmware(downLoadUrl) {
             
+            // 下载失败
+            guard $0 != L10n.UpdateFirmwareDownloadError.string else {
+                
+                UpdateProgressView.hide()
+                
+                self.alertUpdateFail(downLoadUrl, updateView: updateView)
+                
+                return
+                
+            }
+            
+            // 将下载的固件传至手环进行升级
             LifeBandBle.shareInterface.updateFirmware($0) {
                 
                 $0.success { value in
@@ -125,7 +170,15 @@ struct UpdateFWViewModel: MenuProtocol, FirmwareDownload {
                         
                         UpdateProgressView.hide()
                         
+                        self.alertUpdatesuccess()
+                        
                     }
+                }.failure{ _ in
+                   
+                    UpdateProgressView.hide()
+                    
+                    self.alertUpdateFail(downLoadUrl, updateView: updateView)
+                   
                 }
             }
             
@@ -145,6 +198,37 @@ struct UpdateFWViewModel: MenuProtocol, FirmwareDownload {
                 
         }
 
+    }
+    
+    // 固件升级失败的Alert提示
+    func alertUpdateFail(downLoadUrl: String, updateView: UpdateProgressView) {
+        
+        let versionAlert = UIAlertController(title: "", message: L10n.UpdateFirmwareUpdateFailAlertMsg.string, preferredStyle: .Alert)
+        
+        let cancelAction = UIAlertAction(title: L10n.AlertCancelActionTitle.string, style: .Cancel) { (action) in }
+        
+        let updateAction = UIAlertAction(title: L10n.AlertReUpdateActionTitle.string, style: .Default) { (action) in
+            let updateView = UpdateProgressView.show()
+            self.downloadAndUpdateFW(downLoadUrl, updateView: updateView)
+        }
+        
+        versionAlert.addAction(cancelAction)
+        versionAlert.addAction(updateAction)
+        
+        UIApplication.sharedApplication().keyWindow?.rootViewController?.presentViewController(versionAlert, animated: true, completion: nil)
+    }
+    
+    // 固件升级成功的Alert提示
+    func alertUpdatesuccess() {
+        
+        let versionAlert = UIAlertController(title: "", message: L10n.UpdateFirmwareUpdateSuccessAlertMsg.string, preferredStyle: .Alert)
+        
+        let sureAction = UIAlertAction(title: L10n.AlertSureActionTitle.string, style: .Cancel) { (action) in }
+        
+        versionAlert.addAction(sureAction)
+        
+        UIApplication.sharedApplication().keyWindow?.rootViewController?.presentViewController(versionAlert, animated: true, completion: nil)
+        
     }
     
 }
@@ -174,18 +258,28 @@ struct UndoBindViewModel: MenuProtocol {
     
     func onClickCell() {
         
-        BindBandCtrl.bindScene = .Rebind
+        let alertView = UIAlertController(title: "", message: L10n.AlertReBindBandMsg.string, preferredStyle: .Alert)
         
-        LifeBandBle.shareInterface.bleDisconnect()
+        let cancelAction = UIAlertAction(title: L10n.AlertCancelActionTitle.string, style: .Cancel, handler: nil)
         
-        guard let newNextView = nextView else {
-            return
+        let sureAction = UIAlertAction(title: L10n.AlertSureActionTitle.string, style: .Default) { (action) in
+            
+            BindBandCtrl.bindScene = .Rebind
+            
+            LifeBandBle.shareInterface.bleDisconnect()
+            
+            guard let newNextView = self.nextView else { return }
+            
+            let userInfo = ["nextView": newNextView] as [NSObject: AnyObject]
+            
+            NSNotificationCenter.defaultCenter().postNotificationName(NotificationName.HomePushView.rawValue, object: nil, userInfo: userInfo)
+            NSNotificationCenter.defaultCenter().postNotificationName(NotificationName.HomeShowHomeView.rawValue, object: nil)
         }
         
-        let userInfo = ["nextView": newNextView] as [NSObject: AnyObject]
+        alertView.addAction(cancelAction)
+        alertView.addAction(sureAction)
         
-        NSNotificationCenter.defaultCenter().postNotificationName(NotificationName.HomePushView.rawValue, object: nil, userInfo: userInfo)
-        NSNotificationCenter.defaultCenter().postNotificationName(NotificationName.HomeShowHomeView.rawValue, object: nil)
+        UIApplication.sharedApplication().keyWindow?.rootViewController?.presentViewController(alertView, animated: true, completion: nil)
         
     }
     
@@ -347,6 +441,27 @@ struct AppAboutMenuGroupDataModel: MenuGroupDataSource {
         items.append(MenuViewModel(icon: UIImage(asset: .LeftMenuHelp),
             title: L10n.HomeLifeListTitleHelp.string,
             nextView: StoryboardScene.Relate.instantiateHelpAndFeedbackListVC()))
+        
+//        items.append(MenuViewModel(icon: UIImage(asset: .LeftMenuApp),
+//            title: L10n.HomeLifeListTitleRelated.string,
+//            nextView: StoryboardScene.Relate.instantiateRelateAppVC()))
+        
+        
+    }
+    
+}
+
+/**
+ *  APP 推荐App
+ */
+struct AppRecommendMenuGroupDataModel: MenuGroupDataSource {
+    
+    var items: [MenuProtocol] = []
+    var sectionView: UIView = LeftHeaderView(frame: CGRectMake(0, 0, ez.screenWidth, 10))
+    var sectionHeight: CGFloat = 10
+    var titleColor = UIColor.whiteColor()
+    
+    init() {
         
         items.append(MenuViewModel(icon: UIImage(asset: .LeftMenuApp),
             title: L10n.HomeLifeListTitleRelated.string,

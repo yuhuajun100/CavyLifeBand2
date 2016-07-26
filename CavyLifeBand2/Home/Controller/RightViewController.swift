@@ -19,22 +19,14 @@ class RightViewController: UIViewController {
     
     @IBOutlet weak var bandElectricView: BandElectricView!
     
-    @IBOutlet weak var bandElectricViewRightConstraint: NSLayoutConstraint!
-    
     @IBOutlet weak var fwVersion: UILabel!
     @IBOutlet weak var bandName: UILabel!
     @IBOutlet weak var bandTitle: UILabel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        
-        if UIDevice.isPhone5() || UIDevice.isPhone4() {
-            
-           bandElectricViewRightConstraint.constant = 20
-        }
 
-        
+        removeNotificationObserver()
         setTopViewLabel()
         
         configTableView()
@@ -43,7 +35,7 @@ class RightViewController: UIViewController {
         addMenumenuGroupData(BandHardwareMenuGroupDataModel(isConnect: false))
         addMenumenuGroupData(BindingBandMenuGroupDataModel())
         
-        NSTimer.runThisEvery(seconds: 30) { _ in
+        NSTimer.runThisEvery(seconds: 3) { _ in
             
             self.getBandElectric()
             
@@ -82,7 +74,7 @@ class RightViewController: UIViewController {
         fwVersion.textColor = UIColor(named: .FColor)
         bandName.textColor  = UIColor(named: .FColor)
         
-        bandTitle.font = UIFont.mediumSystemFontOfSize(18.0)
+        bandTitle.font = UIFont.systemFontOfSize(18.0)
         fwVersion.font = UIFont.systemFontOfSize(12.0)
         bandName.font  = UIFont.systemFontOfSize(12.0)
     }

@@ -9,6 +9,7 @@
 import UIKit
 import Charts
 import EZSwiftExtensions
+import SnapKit
 
 class ShowStackedChartsView: BarChartView, ChartViewDelegate {
     
@@ -26,7 +27,7 @@ class ShowStackedChartsView: BarChartView, ChartViewDelegate {
     
     // 最大值 显示在左上角
     var maxValue: Int = 0
-
+    
     /**
      配置所有视图 主入口
      */
@@ -41,7 +42,7 @@ class ShowStackedChartsView: BarChartView, ChartViewDelegate {
         setupBarLineChartView()
         
         addxAxis()
-
+        
         addLegend()
         
         if UIDevice.isPhone5() {
@@ -82,7 +83,8 @@ class ShowStackedChartsView: BarChartView, ChartViewDelegate {
         
         descriptionText = "\(maxValue  / 60 + 1)h"
         descriptionFont = UIFont.systemFontOfSize(12)
-        descriptionTextPosition = CGPointMake(20, 0)
+        descriptionTextAlign = .Left
+        descriptionTextPosition = CGPointMake(10, 1)
         descriptionTextColor = UIColor.whiteColor()
         
     }
@@ -116,11 +118,9 @@ class ShowStackedChartsView: BarChartView, ChartViewDelegate {
         
         xAxis.setLabelsToSkip(spaceBetweenLabels) //设置横坐标显示的间隔
 
-        
-        
     }
     
-
+    
     /**
      添加右上角标志
      */
@@ -129,10 +129,10 @@ class ShowStackedChartsView: BarChartView, ChartViewDelegate {
         self.legend.horizontalAlignment = .Right
         self.legend.verticalAlignment = .Top
         self.legend.form = .Circle
-        self.legend.formSize = 10
-        self.legend.textColor = UIColor.whiteColor()
+        self.legend.formSize = 0
+        self.legend.textColor = UIColor.clearColor()
         self.legend.font = UIFont(name: "HelveticaNeue-Light", size: 12)!
-        self.legend.xEntrySpace = 10
+        self.legend.xEntrySpace = 0
         
     }
     
@@ -143,11 +143,13 @@ class ShowStackedChartsView: BarChartView, ChartViewDelegate {
      */
     func setData(count: Int) {
         
+        var datasCount = count
         var xVals: [String] = []
         var yVals: [BarChartDataEntry] = []
         
-
-        for i in 0 ..< count {
+        if timeBucketStyle == .Week { datasCount = 7 }
+        
+        for i in 0 ..< datasCount {
             
             // xVals
             if timeBucketStyle == .Week {
@@ -160,27 +162,27 @@ class ShowStackedChartsView: BarChartView, ChartViewDelegate {
                 xVals.append(timeString)
                 
             }
-
-            // yVals
-            // 随机产生数据
-//            let val1 = Double(arc4random_uniform(200) + 1)// 浅睡
-//            let val2 = Double(arc4random_uniform(200) + 1)// 深睡
             
-            // 数据库取出的
-            let val1 = Double(chartsData[i].deepSleep)
-            let val2 = Double(chartsData[i].lightSleep)
+            // yVals 随机产生数据
+            //            let val1 = Double(arc4random_uniform(200) + 1)// 浅睡
+            //            let val2 = Double(arc4random_uniform(200) + 1)// 深睡
+            
+            // 数据库取出的 先浅睡 后深睡
+
+            let val1 = Double(chartsData[i].lightSleep)
+            let val2 = Double(chartsData[i].deepSleep)
             
             if maxValue < chartsData[i].deepSleep + chartsData[i].lightSleep {
                 maxValue = chartsData[i].deepSleep + chartsData[i].lightSleep
             }
             let dataEntrys = BarChartDataEntry(values: [val1, val2], xIndex: i)
-        
+            
             yVals.append(dataEntrys)
         }
         
         // 更新左边显示的最大值
         descriptionText = "\(maxValue / 60 + 1)h"
-
+        
         var dataSet = BarChartDataSet()
         if self.data?.dataSetCount > 0 {
             

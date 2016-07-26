@@ -107,8 +107,8 @@
 
 "Guide.PhoneRemind.Title"     = "来电提醒";
 "Guide.PhoneRemind.Info"      = "来电振动提醒，不漏接一个重要来电";
-"Guide.PK.Title"              = "计步PK";
-"Guide.PK.Info"               = "实时查看与好友计步PK详情\n让走路成为一种乐趣";
+"Guide.PK.Title"              = "计步成就";
+"Guide.PK.Info"               = "让走路成为一种乐趣";
 "Guide.SafetyService.Title"   = "安全服务";
 "Guide.SafetyService.Info"    = "遇到紧急情况，连按4下按钮\n立即向联系人发送求救信息";
 "Guide.LifeBand.Title"        = "豚鼠手环";
@@ -153,15 +153,15 @@
 "Home.LifeList.Title.PK"               = "PK";
 "Home.LifeList.Title.About"            = "关于";
 "Home.LifeList.Title.Help"             = "帮助与反馈";
-"Home.LifeList.Title.Related"          = "APP推荐";
+"Home.LifeList.Title.Related"          = "体感应用";
 "Home.RightList.Title.Camera"          = "遥控相机";
 "Home.RightList.Title.Notification"    = "来电提醒";
 "Home.RightList.Title.AlarmClock"      = "手环闹钟";
 "Home.RightList.Title.Security"        = "紧急求救";
 "Home.RightList.Title.FirmwareUpgrade" = "固件升级";
-"Home.RightList.Title.BindingBand"     = "绑定新的CavyBand";
+"Home.RightList.Title.BindingBand"     = "绑定新的豚鼠手环";
 
-"Band.Title"                           = "我的豚鼠手环Band";
+"Band.Title"                           = "我的豚鼠手环";
 "Band.FWVersion"                       = "固件版本: ";
 "Band.Disconnect.Title"                = "手环未连接";
 "Band.Disconnect.FWVersion.Title"      = "开启蓝牙，按下手环";
@@ -248,7 +248,7 @@
 "AccountInfo.AchieveView.NumPrefix"      = "您已累计行走";
 
 //闹钟
-"AlarmClock.IntelligentClockTableFooter.Info" = "手环振动提醒 取消传统声音唤醒体系";
+"AlarmClock.IntelligentClockTableFooter.Info" = "手环振动提醒 远离传统闹铃噪声";
 "AlarmClock.Title"                            = "手环闹钟";
 "AlarmClock.Awake.Title"                      = "智能唤醒";
 "AlarmClock.Awake.Description"                = "允许你闹钟在目标唤醒时间之前30分钟内将我从浅度睡眠中唤醒，让我更轻松的起床。";
@@ -351,7 +351,7 @@
 "Relate.HelpAndFeedback.SendBtnTitle"        = "发送";
 "Relate.HelpAndFeedback.TextViewPlaceHolder" = "请描述你的问题或意见";
 "Relate.HelpAndFeedback.SendSuccessAlertMsg" = "发送成功";
-"Relate.RelateApp.NavTitle"                  = "APP推荐";
+"Relate.RelateApp.NavTitle"                  = "体感应用";
 "Relate.RelateAppCell.DownloadBtnTitle"      = "下载";
 
 //星期
@@ -364,17 +364,40 @@
 "AlarmDay.Sunday"    = "日";
 
 // 固件升级
-"UpdateProgress.Info"                    = "请勿退出应用或关闭手环";
-"UpdateProgress.title"                   = "手环正在升级";
-"UpdateFirmware.BandDisconnect.AlertMsg" = "请先连接手环";
-"UpdateFirmware.IsNewVersion.AlertMsg"   = "固件版本已最新版本";
+"UpdateProgress.Info"                         = "请勿退出应用或关闭手环";
+"UpdateProgress.title"                        = "手环正在升级";
+"UpdateFirmware.BandDisconnect.AlertMsg"      = "请先连接手环";
+"UpdateFirmware.IsNewVersion.AlertMsg"        = "固件版本已最新版本";
+"UpdateFirmware.InstallNewVersion.AlertTitle" = "安装新的固件版本";
+"UpdateFirmware.DownloadError" = "error";
+"UpdateFirmware.LowElectric.AlertTitle" = "手环电量过低";
+"UpdateFirmware.LowEle.AlertMsg" = "手环电量过低，固件升级至少需要20%%电量，请充电后再试";
+"UpdateFirmware.UpdateFail.AlertMsg" = "固件升级失败";
+"UpdateFirmware.UpdateSuccess.AlertMsg" = "请稍等，豚鼠手环将在重启后自动连接";
+"UpdateFirmware.CheckVersion.AlertMsg" = "正在检测固件版本";
+
 
 // 主页同步数据
 "Home.Refresh.Idle"       = "下拉同步数据...";
 "Home.Refresh.Pulling"    = "松开同步数据...";
 "Home.Refresh.Refreshing" = "  正在同步数据...";
+"Home.Refresh.AlertTitle" = "同步数据失败";
+"Home.Refresh.faildDes"   = "                1.确认蓝牙已打开\n                2.确认手环处于连接状态\n                3.下拉重新同步数据";
 
 // 弹窗相关
-"Alert.SureAction.Title"     = "确认";
+"Alert.SureAction.Title"     = "确定";
 "Alert.CancelAction.Title"   = "取消";
+"Alert.UpdateAction.Title"   = "升级";
 "Alert.UndoPKWaitRecord.Msg" = "确认撤销此次PK？";
+"Alert.ReBindBand.Msg"       = "确认绑定新的手环？";
+"Alert.tips.Msg"             = "提示";
+"Alert.relogin.Title"        = "登录已失效，请重新登录";
+"Alert.ReUpdateAction.Title" = "重新升级";
+"Alert.ReTryAfterChargeAction.Title" = "充电后再试";
+"Alert.Camera.OpenCamera" = "请在iPhone的“设置-隐私-相机”选项中，允许豚鼠生活访问你的相机";
+"Alert.Camera.OpenMicrophone" = "请在iPhone的“设置-隐私-麦克风”选项中，允许豚鼠生活访问你的麦克风";
+"Alert.Camera.Open.All" = "请在iPhone的“设置-隐私”选项中，允许豚鼠生活访问你的相机和麦克风";
+
+// 分享
+"Share.Title" = "能玩体感游戏的智能手环";
+"Share.Content" = "来自豚鼠科技";

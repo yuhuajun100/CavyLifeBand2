@@ -26,6 +26,7 @@ class AccountManagerViewController: UIViewController, BaseViewControllerPresente
     
     var realm: Realm = try! Realm()
     
+    @IBOutlet weak var lineConstraint: NSLayoutConstraint!
     // 手机输入框
     @IBOutlet weak var userNameTextField: AccountTextField!
     
@@ -101,6 +102,12 @@ class AccountManagerViewController: UIViewController, BaseViewControllerPresente
         
         textFieldView.backgroundColor = UIColor.whiteColor()
         textFieldView.layer.cornerRadius = CavyDefine.commonCornerRadius
+        
+        if UIDevice.isPhone5() || UIDevice.isPhone4() {
+            
+            lineConstraint.constant = 0.5
+        }
+        
         
         rightBtn?.setTitle(dataSource?.itemRightTitle, forState: .Normal)
         
@@ -443,14 +450,14 @@ class AccountManagerViewController: UIViewController, BaseViewControllerPresente
             
             if dataSource?.isEmail == true {
                 
-                sendSignUpEmailCode({ [unowned self] (msg) in
+                sendSignUpEmailCode{ [unowned self] (msg) in
                     self.signUpOrCodeFail(msg)
-                })
+                }
                 
             } else {
-                sendSignUpPhoneCode({ [unowned self] (msg) in
+                sendSignUpPhoneCode{ [unowned self] (msg) in
                     self.signUpOrCodeFail(msg)
-                })
+                }
             }
             
         } else {
@@ -506,7 +513,7 @@ class AccountManagerViewController: UIViewController, BaseViewControllerPresente
     
     func onLeftBtnBack() {
         
-        
+        self.view.endEditing(true)
         guard let _ = self.navigationController?.popViewControllerAnimated(true) else{
             
             self.dismissVC(completion: nil)

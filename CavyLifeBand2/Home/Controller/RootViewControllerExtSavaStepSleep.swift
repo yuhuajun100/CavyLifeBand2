@@ -17,7 +17,7 @@ extension RootViewController: ChartsRealmProtocol {
      - author: sim cai
      - date: 16-05-27 10:05:37
      */
-    func syncDataFormBand(autoUpdate: Bool = true) {
+    func syncDataFormBand() {
         
         // 目前手环只支持两天，默认从昨天开始同步
         var syncDate = (NSDate().gregorian - 1.day).beginningOfDay.date
@@ -27,21 +27,7 @@ extension RootViewController: ChartsRealmProtocol {
             
             syncDate = lastData.time
             
-            // 转换当前所在时区的时间   间隔10分钟 同步一次
-            
-            if autoUpdate == true {  //自动刷新 进入调用
-                
-                guard (NSDate().gregorian.beginningOfDay.date - syncDate).totalMinutes >= 10  else {
-                    
-                    // 发送通知让主页停止同步数据下拉消失
-                    NSNotificationCenter.defaultCenter().postNotificationName(RefreshStatus.StopRefresh.rawValue, object: nil)
-                    
-                    return
-                }
-            }
-            
         }
-        
         
         LifeBandSyncData.shareInterface.syncDataFormBand(syncDate) {
             
@@ -58,41 +44,24 @@ extension RootViewController: ChartsRealmProtocol {
                 let uploadData = self.queryUploadBandData()
                 
                 guard uploadData.0.count > 0 else {
+                    // 不需要同步也要让下拉消失
+                    NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
                     return
                 }
                 
-                UploadBandData.shareApi.uploadBandData(uploadData.0) { [unowned self] data in
+                UploadBandData.shareApi.uploadBandData(uploadData.0, successHandler: {
+                    [unowned self] data in
                     self.setChartBandDataSynced(uploadData.1, endDate: uploadData.2)
+                    
+                }) {
+                    // 发送通知让主页停止同步数据下拉消失
+                    NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
                 }
-                
-//                // 上报睡眠信息
-//                StepSleepReportedData.shareApi.sleepReportedDataToWebServer(sleeps).responseJSON {
-//                    $0.result.success { value in
-//                        self.saveTiltsToRealm(sleeps)
-//                        }
-//                        .failure { error in
-//                            self.saveTiltsToRealm(sleeps)
-//                    }
-//                }
-//                
-//                // 上报计步信息
-//                StepSleepReportedData.shareApi.stepsReportedDataToWebServer(steps).responseJSON {
-//                    
-//                    $0.result.success{ value in
-//                        
-//                        // 保存数据到数据库中
-//                        // TODO: 这里需要设置同步标识
-//                        self.saveStepsToRealm(steps)
-//                        
-//                        }
-//                        .failure { error in
-//                            self.saveStepsToRealm(steps)
-//                    }
-//                }
-                
-                }
-                .failure { error in
-                    Log.error("\(error)")
+            
+            }.failure { error in
+                Log.error("\(error)")
+                // 发送通知让主页停止同步数据下拉消失
+                NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
             }
             
         }
@@ -183,7 +152,9 @@ extension RootViewController: ChartsRealmProtocol {
         
         NSTimer.runThisAfterDelay(seconds: 60 * 10) {
             self.syncDataTime = NSTimer.runThisEvery(seconds: 60 * 10) { _ in
-                self.syncDataFormBand()
+//                self.syncDataFormBand()
+                NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
+
             }
         }
         

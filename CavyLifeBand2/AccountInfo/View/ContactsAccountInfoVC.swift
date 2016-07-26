@@ -45,12 +45,14 @@ class ContactsAccountInfoVC: UIViewController, BaseViewControllerPresenter, User
     
     var accountInfos: Array<AnyObject?> = []
     
+    var loadingView: UIActivityIndicatorView = UIActivityIndicatorView()
+    
     let achieveView = NSBundle.mainBundle().loadNibNamed("UserAchievementView", owner: nil, options: nil).first as? UserAchievementView
     
     override func viewWillAppear(animated: Bool) {
         
         // 调接口获取个人信息
-        queryUserInfoByNet() { resultUserInfo in
+        queryUserInfoByNet { resultUserInfo in
             
             let userInfoModel = UserInfoModel(userId: CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId, userProfile: resultUserInfo!)
             
@@ -72,12 +74,40 @@ class ContactsAccountInfoVC: UIViewController, BaseViewControllerPresenter, User
         self.updateNavUI()
         
     }
+    
+    /**
+     返回按钮处理
+     */
+    func onLeftBtnBack() {
+        
+        self.navigationController?.popViewControllerAnimated(false)
+        NSNotificationCenter.defaultCenter().postNotificationName(NotificationName.HomeLeftOnClickMenu.rawValue, object: nil)
+    }
    
     deinit {
         
         notificationToken?.stop()
         
         Log.info("deinit ContactsAccountInfoVC")
+        
+    }
+    
+    /**
+      添加加载圈圈
+     */
+    func addLodingView() {
+        
+        self.view.addSubview(loadingView)
+        
+        loadingView.hidesWhenStopped = true
+        
+        loadingView.activityIndicatorViewStyle = .Gray
+        
+        loadingView.snp_makeConstraints { make in
+            make.center.equalTo(self.view)
+            make.width.equalTo(50.0)
+            make.height.equalTo(50.0)
+        }
         
     }
     
@@ -154,7 +184,7 @@ class ContactsAccountInfoVC: UIViewController, BaseViewControllerPresenter, User
         
         // collectionView 高度
         // |-(badgeCount / 3） *（20 + 112）-|
-        let collectionViewHeight = CGFloat((badgeCount / 3) * 132)
+        let collectionViewHeight = ez.screenWidth <= 320 ? CGFloat((badgeCount / 2) * 132) : CGFloat((badgeCount / 3) * 132)
 
         // contentView
         contectView.setCornerRadius(radius: CavyDefine.commonCornerRadius)
@@ -182,21 +212,34 @@ class ContactsAccountInfoVC: UIViewController, BaseViewControllerPresenter, User
         // 退出按钮手势
         logoutButton.addTapGesture { _ in
             
-            NetWebApi.shareApi.netPostRequest(WebApiMethod.Logout.description, modelObject: CommenMsgResponse.self, successHandler: { (data) in
+            self.loadingView.startAnimating()
+            
+            let parameters: [String: AnyObject] = [NetRequestKey.DeviceSerial.rawValue: CavyDefine.bindBandInfos.bindBandInfo.deviceSerial,
+                                                    NetRequestKey.DeviceModel.rawValue: UIDevice.deviceType().rawValue,
+                                                    NetRequestKey.AuthKey.rawValue: CavyDefine.gameServerAuthKey,
+                                                    NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.defaultBindBand,
+                                                    NetRequestKey.Longitude.rawValue: CavyDefine.userCoordinate.longitude,
+                                                    NetRequestKey.Latitude.rawValue: CavyDefine.userCoordinate.latitude]
+            
+            NetWebApi.shareApi.netPostRequest(WebApiMethod.Logout.description, para: parameters, modelObject: CommenMsgResponse.self, successHandler: { [unowned self] (data) in
                 CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId = ""
                 CavyDefine.loginUserBaseInfo.loginUserInfo.loginUsername = ""
                 CavyDefine.loginUserBaseInfo.loginUserInfo.loginAuthToken = ""
                 
                 UIApplication.sharedApplication().keyWindow?.setRootViewController(StoryboardScene.Main.instantiateMainPageView(), transition: CATransition())
-                
+                self.loadingView.stopAnimating()
                 LifeBandBle.shareInterface.bleDisconnect()
             }, failureHandler: { (msg) in
                 CavyLifeBandAlertView.sharedIntance.showViewTitle(message: msg.msg)
+                
+                self.loadingView.stopAnimating()
             })
             
             
             
         }
+        
+        addLodingView()
         
     }
 
@@ -326,18 +369,22 @@ extension ContactsAccountInfoVC: UITableViewDelegate, UITableViewDataSource {
             // 跳转到修改备注
             let requestVC = StoryboardScene.Contacts.instantiateContactsReqFriendVC()
             
-            let changeNicknameVM = UserChangeNicknameVM(viewController: requestVC)
+            let cellViewModel = accountInfos[indexPath.row] as? PresonInfoCellViewModel
+            
+            let changeNicknameVM = UserChangeNicknameVM(viewController: requestVC, textFeildText: cellViewModel?.title)
             
             requestVC.viewConfig(changeNicknameVM)
             
             self.pushVC(requestVC)
         } else {
             
+            let cellViewModel = accountInfos[indexPath.row + 1] as? PresonInfoListCellViewModel
+            
             if indexPath.row == accountInfos.count - 2 {
                 // 跳转到修改地址
                 let requestVC = StoryboardScene.Contacts.instantiateContactsReqFriendVC()
-                
-                let changeRemarkVM = UserChangeAddressVM(viewController: requestVC)
+                                
+                let changeRemarkVM = UserChangeAddressVM(viewController: requestVC, textFieldText: cellViewModel?.info)
                 
                 requestVC.viewConfig(changeRemarkVM)
                 
@@ -350,16 +397,33 @@ extension ContactsAccountInfoVC: UITableViewDelegate, UITableViewDataSource {
                     
             switch indexPath.row {
             case 0:
-                let nextVM = AccountGenderViewModel()
+                let nextVM = AccountGenderViewModel(gender: CavyDefine.translateSexToNumber(cellViewModel?.info ?? ""))
                 nextVC.configView(nextVM, delegate: nextVM)
             case 1:
-                let nextVM = AccountHeightViewModel()
+                let nextVM = AccountHeightViewModel(height: cellViewModel?.info.stringByReplacingOccurrencesOfString("cm", withString: "") ?? "")
                 nextVC.configView(nextVM, delegate: nextVM)
             case 2:
-                let nextVM = AccountWeightViewModel()
+                let nextVM = AccountWeightViewModel(weight: cellViewModel?.info.stringByReplacingOccurrencesOfString("kg", withString: "") ?? "")
                 nextVC.configView(nextVM, delegate: nextVM)
             case 3:
-                let nextVM = AccountBirthdayViewModel()
+
+                let userInfos: Results<UserInfoModel> = queryUserInfo(CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId)
+                let userInfo = userInfos.first
+                let userBirthday = userInfo!.birthday
+                let birthdayDate = NSDate(fromString: userBirthday, format: "yyyy-MM-dd")
+                
+                var  nextVM: AccountBirthdayViewModel
+                
+                if birthdayDate == nil {
+                    
+                     nextVM = AccountBirthdayViewModel()
+                    
+                }else{
+                   
+                    nextVM = AccountBirthdayViewModel(year: birthdayDate!.toString(format: "yyyy").toInt()!, month: birthdayDate!.toString(format: "M").toInt()!, day: birthdayDate!.toString(format: "d").toInt()!)
+                }
+                
+               
                 nextVC.configView(nextVM, delegate: nextVM)
             default:
                 break

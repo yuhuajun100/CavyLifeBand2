@@ -36,12 +36,12 @@ class ChartsSubTimeBucketFlowLayout: UICollectionViewFlowLayout {
         let array: Array<UICollectionViewLayoutAttributes> = super.layoutAttributesForElementsInRect(rect)!
         
         let centerX = ez.screenWidth * 0.5 + self.collectionView!.contentOffset.x
+        
         for attrs in array {
-            attrs
             
             let itemCenterX = attrs.center.x
             
-            let scale = 1 - 0.05 * fabs(itemCenterX - centerX) / itemWidth
+            let scale = 1 - 0.12 * fabs(itemCenterX - centerX) / itemWidth
             
             attrs.transform3D = CATransform3DMakeScale(scale, scale, 1)
             
@@ -53,7 +53,5 @@ class ChartsSubTimeBucketFlowLayout: UICollectionViewFlowLayout {
         
         return array
     }
-    
-    
-    
+  
 }

@@ -19,8 +19,7 @@ let dateViewHeight: CGFloat = 50.0
 let ringViewHeight: CGFloat = 96 + ez.screenWidth * 0.55
 let navBarHeight: CGFloat = 64.0
 
-class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsRealmProtocol, HomeListRealmProtocol, SinglePKRealmModelOperateDelegate, ChartStepRealmProtocol, QueryUserInfoRequestsDelegate {
-
+class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsRealmProtocol, SinglePKRealmModelOperateDelegate, ChartStepRealmProtocol, QueryUserInfoRequestsDelegate {
     
     var leftBtn: UIButton? = {
         
@@ -62,9 +61,8 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
     var realm: Realm = try! Realm()
     
     var userId: String { return CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId }
-    
-    var aphlaView: UIView?
-    var activityView: UIActivityIndicatorView?
+        
+    static var shareInterface = HomeViewController()
     
     deinit {
         removeNotificationObserver()
@@ -74,7 +72,7 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
     override func viewDidLoad() {
         
         super.viewDidLoad()
-        
+
         parseChartListData()
 
         addAllView()
@@ -91,17 +89,13 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
         addNotificationObserver(BandBleNotificationName.BandDesconnectNotification.rawValue, selector: #selector(HomeViewController.bandDesconnect))
         addNotificationObserver(BandBleNotificationName.BandConnectNotification.rawValue, selector: #selector(HomeViewController.bandConnect))
         
-        // 添加自动刷新
-        addAutoRefreshHeader()
-
-        // 后台进入前台 同步数据  "addHomeViewAutoRefresh"
-        addNotificationObserver(RefreshStatus.AddAutoRefresh.rawValue, selector: #selector(beginHomeViewRefreshing))
-        
-        // 停止自动刷新 更改刷新的header为手动刷新模式 "endHomeViewAutoRefresh"
-        addNotificationObserver(RefreshStatus.StopRefresh.rawValue, selector: #selector(endHomeViewRefreshing))
+        // 刷新
+        addRefershHeader()
+        addNotificationObserver(RefreshStyle.BeginRefresh.rawValue, selector: #selector(beginBandRefersh))
+        addNotificationObserver(RefreshStyle.StopRefresh.rawValue, selector: #selector(endBandRefersh))
  
     }
-    
+
     /**
      手环断线通知
      
@@ -172,23 +166,7 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
         }
         
     }
-    
-    
-       /**
-     未连接手环的弹窗
-     */
-    func addAlertView() {
-     
-        let alertView = UIAlertController(title: "同步数据失败", message: "请您绑定手环，重新同步数据", preferredStyle: .Alert)
-        
-        let sureAction = UIAlertAction(title: "确定", style: .Cancel, handler: nil)
-        
-        alertView.addAction(sureAction)
-        
-        self.presentViewController(alertView, animated: true, completion: nil)
-        
 
-    }
     
     /**
      点击左侧按钮
@@ -233,9 +211,21 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
             return
         }
         
+        if let guide = viewController as? GuideViewController {
+            
+            if guide.dataSource is GuideBandBluetooth {
+                
+                CavyDefine.bluetoothPresentViewController(UINavigationController(rootViewController: viewController))
+                
+                return
+            }
+        
+        }
+        
         self.navigationController?.pushViewController(viewController, animated: false)
         
     }
+
     
     // MARK: 解析数据 保存数据库
     
@@ -250,7 +240,7 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
         
         // MARK: 计步相关
         var startDate = ""
-        var endDate = ""
+        let endDate = NSDate().toString(format: "yyyy-MM-dd HH:mm:ss")
         
         if isNeedUpdateStepData() {
             
@@ -259,9 +249,13 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
             if personalList.count != 0 {
                 
                 startDate = personalList.last!.date.toString(format: "yyyy-MM-dd HH:mm:ss")
-                endDate = NSDate().toString(format: "yyyy-MM-dd HH:mm:ss")
+                
+                 //删除数据库最后一条数据 重新开始添加
+                delecNSteptDate(personalList.last!)
+                
                 
             } else {
+                
                 // 如果查询不到数据 则 使用注册日期开始请求
                 guard let startTime = realm.objects(UserInfoModel).filter("userId = '\(userId)'").first?.signUpDate else {
                     return
@@ -271,10 +265,10 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
                 
             }
             
+           
             parseStepDate(startDate, endDate: endDate)
             
         }
-        
     }
     
       /**
@@ -287,22 +281,9 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
 
         
      let  parameters: [String: AnyObject] = ["start_date": startDate, "end_date": endDate]
-//         let  parameters: [String: AnyObject] = ["start_date": "2016-6-5", "end_date": "2016-7-4"]
+        
         NetWebApi.shareApi.netGetRequest(WebApiMethod.Steps.description, para: parameters, modelObject: NChartStepData.self, successHandler: { result  in
  
-            //服务器数据获取成功判断数据库最后一条数据时间是否是当天 如果是当天就删除之后再开始添加新数据
-            
-            let today = NSDate(fromString: endDate, format: "yyyy-MM-dd")?.gregorian.isToday
-            
-            //如果传入的时间是当天 则查询是否有当天的数据然后删除
-            
-            if today == true {
-                
-              self.deleteStepDataWithDate(endDate)
-                
-            }
-            
-            
             for list in result.stepsData.stepsData {
                
                 self.addNStepListRealm(list)
@@ -480,17 +461,19 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
         achieveView?.configWithAchieveIndexForUser()
 
         maskView.addSubview(achieveView!)
+        
+        let collectionViewHeight = ez.screenWidth <= 320 ? CGFloat(3 * 132) : CGFloat(2 * 132)
 
         achieveView!.snp_makeConstraints(closure: { make in
             make.leading.equalTo(maskView).offset(20.0)
             make.trailing.equalTo(maskView).offset(-20.0)
             make.centerY.equalTo(maskView)
-            make.height.equalTo(380.0)
+            make.height.equalTo(68 + collectionViewHeight)
         })
         
         UIApplication.sharedApplication().keyWindow?.addSubview(maskView)
         
-        queryUserInfoByNet() { resultUserInfo in
+        queryUserInfoByNet { resultUserInfo in
             
             achieveView?.configWithAchieveIndexForUser()
             

@@ -19,7 +19,7 @@ struct CavyDefine {
     
     // 新的后台服务器地址
     static let webServerAddr = "http://pay.tunshu.com/live/api/v1/"
-    
+
     // webApi地址
     static let webApiAddr = serverAddr + "/api.do"
     
@@ -51,6 +51,11 @@ struct CavyDefine {
     
     // 已登录用户昵称
     static var userNickname = ""
+    
+    // 用户经纬度，用于用户登录退出事件统计的入参
+    static var userCoordinate = UserCoordinateInfo()
+    
+    static var gameServerAuthKey: String = "5QaN4e9i4HeqcSuX4"
     
     static var shareImageName: String = "CavyLifeBand2ShareImage"
     
@@ -86,6 +91,24 @@ struct CavyDefine {
         }
         
         return accountSex
+    }
+    
+    /**
+     性别汉字转数字
+     
+     - parameter sex: 性别标识
+     
+     - returns: 性别
+     */
+    static func translateSexToNumber(sex: String) -> Int {
+                
+        if sex == L10n.ContactsGenderGirl.string {
+            
+            return 0
+            
+        }
+        
+        return 1
     }
     
     // MARK - 蓝牙连接ViewController 跳转处理
@@ -199,8 +222,9 @@ protocol LoginStorage {
 extension NSUserDefaults: LoginStorage { }
 
 // MARK: - 手环绑定信息存储 KeyChain
+
 /**
- *  手环绑定信息
+ *  手环绑定信息  每个user 只会绑定一个MACAddress
  */
 struct BindBandInfo {
     
@@ -216,19 +240,25 @@ struct BindBandInfo {
     
     init() {
         
+        if keychain["CavyUserDevice"] == nil {
+            keychain["CavyUserDevice"] = UIDevice.currentDevice().identifierForVendor?.UUIDString ?? ""
+        }
+        
         guard let userMac = keychain[data: "CavyUserMAC"] else {
             
-            self.bindBandInfo = BindBandInfoStorage(defaultBindBand: keychain["CavyGameMAC"] ?? "", userBindBand: [:])
+            self.bindBandInfo = BindBandInfoStorage(defaultBindBand: keychain["CavyGameMAC"] ?? "", userBindBand: [:],
+                                                    deviceSerial: keychain["CavyUserDevice"]!)
             return
             
         }
         
         guard let userBindBand = NSKeyedUnarchiver.unarchiveObjectWithData(userMac) as? [String: NSData] else {
-            self.bindBandInfo = BindBandInfoStorage(defaultBindBand: keychain["CavyGameMAC"] ?? "", userBindBand: [:])
+            self.bindBandInfo = BindBandInfoStorage(defaultBindBand: keychain["CavyGameMAC"] ?? "", userBindBand: [:],
+                                                    deviceSerial: keychain["CavyUserDevice"]!)
             return
         }
         
-        self.bindBandInfo = BindBandInfoStorage(defaultBindBand: keychain["CavyGameMAC"] ?? "", userBindBand: userBindBand)
+        self.bindBandInfo = BindBandInfoStorage(defaultBindBand: keychain["CavyGameMAC"] ?? "", userBindBand: userBindBand, deviceSerial: keychain["CavyUserDevice"]!)
         
     }
     
@@ -246,8 +276,14 @@ struct BindBandInfoStorage {
     
     var defaultBindBand: String
     var userBindBand: [String: NSData]
+    var deviceSerial: String
     
     
+}
+
+struct UserCoordinateInfo {
+    var latitude: String = ""
+    var longitude: String = ""
 }
 
 
@@ -562,7 +598,9 @@ enum UserNetRequestMethod: String {
 
 // MARK: - Web Api 方法定义
 enum WebApiMethod: CustomStringConvertible {
-    case Login, Logout, Dailies, Steps, Sleep, UsersProfile, Firmware, EmergencyContacts, Emergency, SignUpEmailCode, SignUpPhoneCode, ResetPwdPhoneCode, ResetPwdEmailCode, ResetPwdEmail, ResetPwdPhone, SignUpPhone, SignUpEmail, UploadAvatar
+
+    case Login, Logout, Dailies, Steps, Sleep, UsersProfile, Firmware, EmergencyContacts, Emergency, SignUpEmailCode, SignUpPhoneCode, ResetPwdPhoneCode, ResetPwdEmailCode, ResetPwdEmail, ResetPwdPhone, SignUpPhone, SignUpEmail, UploadAvatar, Issues, Weather, Location, Helps, RecommendGames, Activities
+
 
     var description: String {
         
@@ -603,6 +641,18 @@ enum WebApiMethod: CustomStringConvertible {
             return CavyDefine.webServerAddr + "signup/phone"
         case .UploadAvatar:
             return CavyDefine.webServerAddr + "avatar"
+        case .Issues:
+            return CavyDefine.webServerAddr + "issues"
+        case .Weather:
+            return CavyDefine.webServerAddr + "weather"
+        case .Location:
+            return CavyDefine.webServerAddr + "users/location"
+        case .Helps:
+            return CavyDefine.webServerAddr + "helps"
+        case .RecommendGames:
+            return CavyDefine.webServerAddr + "games/recommend"
+        case .Activities:
+            return CavyDefine.webServerAddr + "activities"
         }
         
     }
@@ -610,7 +660,7 @@ enum WebApiMethod: CustomStringConvertible {
 }
 
 // MARK: - Web Api 参数定义
-enum NetRequsetKey: String {
+enum NetRequestKey: String {
 
     case UserName           = "username"
     case Password           = "password"
@@ -648,6 +698,14 @@ enum NetRequsetKey: String {
     case Email              = "email"
     case Code               = "code"
     case Base64Data         = "base64Data"
+    case Question           = "question"
+    case Detail             = "detail"
+    case City               = "city"
+    case DeviceSerial       = "device_serial"
+    case DeviceModel        = "device_model"
+    case AuthKey            = "auth_key"
+    case BandMac            = "band_mac"
+    case EventType          = "event_type"
 }
 
 

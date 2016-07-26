@@ -12,6 +12,55 @@ import EZSwiftExtensions
 
 typealias AccountSettingModelPotocols = protocol<GuideViewDataSource, GuideViewDelegate, SetUserInfoRequestsDelegate, UserInfoRealmOperateDelegate>
 
+extension GuideViewDataSource {
+    
+    func getLoadingView() -> UIActivityIndicatorView {
+        let loadingView: UIActivityIndicatorView = UIActivityIndicatorView()
+        
+        loadingView.hidesWhenStopped = true
+        
+        loadingView.activityIndicatorViewStyle = .Gray
+        
+        centerView.addSubview(loadingView)
+        
+        loadingView.snp_makeConstraints { make in
+            make.center.equalTo(centerView)
+            make.width.equalTo(50.0)
+            make.height.equalTo(50.0)
+        }
+        
+        return loadingView
+    }
+
+}
+
+extension SetUserInfoRequestsDelegate {
+    
+    func getLoadingView() -> UIActivityIndicatorView? {
+        let loadingView: UIActivityIndicatorView = UIActivityIndicatorView()
+        
+        loadingView.hidesWhenStopped = true
+        
+        loadingView.activityIndicatorViewStyle = .Gray
+        
+        guard viewController != nil else {
+            return nil
+        }
+        
+        viewController!.view.addSubview(loadingView)
+        
+        loadingView.snp_makeConstraints { make in
+            make.center.equalTo(viewController!.view)
+            make.width.equalTo(50.0)
+            make.height.equalTo(50.0)
+        }
+        
+        return loadingView
+    }
+    
+}
+
+
 /**
  *  性别view model
  */
@@ -23,6 +72,20 @@ struct AccountGenderViewModel: AccountSettingModelPotocols {
     var centerView: UIView = GenderView(frame: CGRectMake(0, 0, middleViewWidth, middleViewHeight)) 
     var userInfoPara: [String: AnyObject] = [String: AnyObject]()
     
+    var loadingView: UIActivityIndicatorView?
+    
+    init(gender: Int) {
+        
+        guard let genderView = centerView as? GenderView else {
+            return
+        }
+        
+        genderView.MOrG = gender == 0 ? false : true 
+        
+        genderView.updateGender()
+        
+    }
+    
     mutating func onClickGuideOkBtn(viewController: UIViewController) {
         
         guard let genderView = centerView as? GenderView else {
@@ -31,9 +94,17 @@ struct AccountGenderViewModel: AccountSettingModelPotocols {
         
         let gender = genderView.MOrG ? 0 : 1
         
-        userInfoPara[NetRequsetKey.Sex.rawValue] = gender
+        userInfoPara[NetRequestKey.Sex.rawValue] = gender
+        
+        if loadingView == nil {
+            loadingView = getLoadingView()
+        }
+        
+        self.loadingView?.startAnimating()
         
         setUserInfo {
+            
+            self.loadingView?.stopAnimating()
             
             if $0 {
                 
@@ -44,6 +115,7 @@ struct AccountGenderViewModel: AccountSettingModelPotocols {
                 }
                 
                 viewController.popVC()
+                
             }
             
         }
@@ -60,8 +132,16 @@ struct AccountBirthdayViewModel: AccountSettingModelPotocols {
     var realm: Realm = try! Realm()
     var title: String { return L10n.GuideMyInfo.string }
     var subTitle: String { return L10n.GuideIntroduce.string }
-    var centerView: UIView = BirthdayView(frame: CGRectMake(0, 0, middleViewWidth, middleViewHeight))
+//    var centerView: UIView = BirthdayView(frame: CGRectMake(0, 0, middleViewWidth, middleViewHeight))
+    var centerView: UIView
     var userInfoPara: [String: AnyObject] = [String: AnyObject]()
+    var loadingView: UIActivityIndicatorView?
+
+    // 添加初始化方法
+    init(year: Int = 1990, month: Int = 1, day: Int = 15) {
+        
+        centerView = BirthdayView(frame: CGRectMake(0, 0, middleViewWidth, middleViewHeight), year: year, month: month, day: day)
+    }
     
     mutating func onClickGuideOkBtn(viewController: UIViewController) {
         
@@ -69,9 +149,17 @@ struct AccountBirthdayViewModel: AccountSettingModelPotocols {
             return
         }
         
-        userInfoPara[NetRequsetKey.Birthday.rawValue] = birthdayView.birthdayString
+        userInfoPara[NetRequestKey.Birthday.rawValue] = birthdayView.birthdayString
+        
+        if loadingView == nil {
+            loadingView = getLoadingView()
+        }
+        
+        self.loadingView?.startAnimating()
         
         setUserInfo {
+            
+            self.loadingView?.stopAnimating()
             
             if $0 {
                 
@@ -103,15 +191,39 @@ struct AccountHeightViewModel: AccountSettingModelPotocols {
     var centerView: UIView = HightView(frame: CGRectMake(0, 0, middleViewWidth, middleViewHeight))
     var userInfoPara: [String: AnyObject] = [String: AnyObject]()
     
+    var loadingView: UIActivityIndicatorView?
+    
+    init(height: String) {
+        
+        guard height.isEmpty == false else {
+            return
+        }
+        
+        guard let heightView = centerView as? HightView else {
+            return
+        }
+        
+        heightView.setHeightValue(height)
+    
+    }
+    
     mutating func onClickGuideOkBtn(viewController: UIViewController) {
         
         guard let heightView = centerView as? HightView else {
             return
         }
         
-        userInfoPara[NetRequsetKey.Height.rawValue] = heightView.heightValue
+        userInfoPara[NetRequestKey.Height.rawValue] = heightView.heightValue
+        
+        if loadingView == nil {
+            loadingView = getLoadingView()
+        }
+        
+        self.loadingView?.startAnimating()
         
         setUserInfo {
+            
+            self.loadingView?.stopAnimating()
             
             if $0 {
                 
@@ -141,15 +253,39 @@ struct AccountWeightViewModel: AccountSettingModelPotocols {
     var centerView: UIView = WeightView(frame: CGRectMake(0, 0, middleViewWidth, middleViewHeight))
     var userInfoPara: [String: AnyObject] = [String: AnyObject]()
     
+    var loadingView: UIActivityIndicatorView?
+    
+    init(weight: String = "") {
+        
+        guard weight.isEmpty == false else {
+            return
+        }
+        
+        guard let weightView = centerView as? WeightView else {
+            return
+        }
+        
+        weightView.setWeightValue(weight.toFloat() ?? 0.0)
+        
+    }
+    
     mutating func onClickGuideOkBtn(viewController: UIViewController) {
         
         guard let weightView = centerView as? WeightView else {
             return
         }
         
-        userInfoPara[NetRequsetKey.Weight.rawValue] = weightView.weightString
+        userInfoPara[NetRequestKey.Weight.rawValue] = weightView.weightString
+        
+        if loadingView == nil {
+            loadingView = getLoadingView()
+        }
+        
+        self.loadingView?.startAnimating()
         
         setUserInfo {
+            
+            self.loadingView?.stopAnimating()
             
             if $0 {
                 
@@ -176,12 +312,14 @@ struct AccountWeightViewModel: AccountSettingModelPotocols {
 struct UserChangeNicknameVM: ContactsReqFriendPortocols, SetUserInfoRequestsDelegate, UserInfoRealmOperateDelegate {
     
     var realm: Realm = try! Realm()
+   
+    var restrictedInput: Bool  = true
     
     var navTitle: String = L10n.ContactsChangeNickNameNavTitle.string
     
     var textFieldTitle: String {
         didSet {
-            userInfoPara[NetRequsetKey.Nickname.rawValue] = textFieldTitle
+            userInfoPara[NetRequestKey.Nickname.rawValue] = textFieldTitle
         }
     }
     
@@ -197,21 +335,31 @@ struct UserChangeNicknameVM: ContactsReqFriendPortocols, SetUserInfoRequestsDele
     
     weak var viewController: UIViewController?
     
+    var loadingView: UIActivityIndicatorView?
+    
     var userInfoPara: [String: AnyObject] = [String: AnyObject]()
     
     //点击发送请求成功回调
     var onClickButtonCellBack: (String -> Void)?
     
-    init(viewController: UIViewController, onClickButtonCellBack: (String -> Void)? = nil) {
+    init(viewController: UIViewController, textFeildText: String? = nil, onClickButtonCellBack: (String -> Void)? = nil) {
         
         self.viewController = viewController
         self.onClickButtonCellBack = onClickButtonCellBack
-        self.textFieldTitle = ""
+        self.textFieldTitle = textFeildText ?? ""
     }
     
-    func onClickButton() {
+    mutating func onClickButton() {
+        
+        if loadingView == nil {
+            loadingView = getLoadingView()
+        }
+        
+        self.loadingView?.startAnimating()
         
         setUserInfo {
+            
+            self.loadingView?.stopAnimating()
             
             if $0 {
                 
@@ -237,11 +385,13 @@ struct UserChangeAddressVM: ContactsReqFriendPortocols, SetUserInfoRequestsDeleg
     
     var realm: Realm = try! Realm()
     
+    var restrictedInput: Bool  = false
+    
     var navTitle: String = L10n.ContactsChangeAddressNavTitle.string
     
     var textFieldTitle: String {
         didSet {
-            userInfoPara[NetRequsetKey.Address.rawValue] = textFieldTitle
+            userInfoPara[NetRequestKey.Address.rawValue] = textFieldTitle
         }
     }
     
@@ -257,21 +407,32 @@ struct UserChangeAddressVM: ContactsReqFriendPortocols, SetUserInfoRequestsDeleg
     
     weak var viewController: UIViewController?
     
+    var loadingView: UIActivityIndicatorView?
+    
     var userInfoPara: [String: AnyObject] = [String: AnyObject]()
     
     //点击发送请求成功回调
     var onClickButtonCellBack: (String -> Void)?
     
-    init(viewController: UIViewController, onClickButtonCellBack: (String -> Void)? = nil) {
+    init(viewController: UIViewController, textFieldText: String? = nil, onClickButtonCellBack: (String -> Void)? = nil) {
         
         self.viewController = viewController
         self.onClickButtonCellBack = onClickButtonCellBack
-        self.textFieldTitle = ""
+        self.textFieldTitle = textFieldText ?? ""
+        
     }
     
-    func onClickButton() {
+    mutating func onClickButton() {
+        
+        if loadingView == nil {
+            loadingView = getLoadingView()
+        }
+        
+        self.loadingView?.startAnimating()
         
         setUserInfo {
+            
+            self.loadingView?.stopAnimating()
             
             if $0 {
                 
