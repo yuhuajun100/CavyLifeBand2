@@ -44,6 +44,8 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
         
         addxAxis()
         
+        addyAxis()
+        
         addLegend()
         
         if UIDevice.isPhone5() {
@@ -70,7 +72,7 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
         drawValueAboveBarEnabled = true
         
         rightAxis.enabled = false // Y轴方向左边 不放轴
-        leftAxis.enabled = false // Y轴方向右边 不放轴
+//        leftAxis.enabled = false // Y轴方向右边 不放轴
         
         delegate = self
         highlightPerTapEnabled = true // 点击时是否高亮 是否可以点击
@@ -96,6 +98,21 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
 
         }
         
+    }
+    
+    func addyAxis() {
+        
+        let leftAxis = self.leftAxis
+        leftAxis.axisMaxValue = Double(1000)
+        leftAxis.enabled = true
+
+        leftAxis.drawGridLinesEnabled = false
+        leftAxis.labelFont = UIFont.systemFontOfSize(0)//[UIFont systemFontOfSize:10.f]
+        leftAxis.labelCount = 0
+        leftAxis.axisLineColor = UIColor.clearColor()
+        leftAxis.spaceTop = 0
+        leftAxis.axisMinValue = 0.0  // this replaces startAtZero = YES
+
     }
 
     /**
