@@ -26,7 +26,7 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
     var chartsData: [PerStepChartsData] = []
     
     // 左上角显示最大值
-    var maxValue: Int = 3
+    var maxValue: Int = 0
     
     /// 透明视图 负责显示柱状图的数值
     var clearView = UIView()
@@ -36,6 +36,8 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
      */
     func configAllView() {
         
+        maxValue = 0
+        
         self.backgroundColor = UIColor(named: .HomeViewMainColor)
         
         setData(chartsData.count) // 设置数据
@@ -44,6 +46,8 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
         
         addxAxis()
         
+        addyAxis()
+        
         addLegend()
         
         if UIDevice.isPhone5() {
@@ -51,6 +55,10 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
             self.leftAxis.spaceBottom = 0
             self.leftAxis.spaceTop = 0
         }
+        
+        
+        leftAxis.axisMaxValue = Double(maxValue * 1000)
+        self.setNeedsDisplay()
         
 //        addClearView()
 
@@ -61,6 +69,7 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
      */
     func setupBarLineChartView() {
         
+        
         noDataTextDescription = "You need to provide data for the chart." // 没有数据的时显示
         drawBordersEnabled = false //是否在折线图上添加边框
         drawGridBackgroundEnabled = false // 是否显示表格颜色
@@ -70,7 +79,7 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
         drawValueAboveBarEnabled = true
         
         rightAxis.enabled = false // Y轴方向左边 不放轴
-        leftAxis.enabled = false // Y轴方向右边 不放轴
+//        leftAxis.enabled = false // Y轴方向右边 不放轴
         
         delegate = self
         highlightPerTapEnabled = true // 点击时是否高亮 是否可以点击
@@ -96,6 +105,21 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
 
         }
         
+    }
+    
+    func addyAxis() {
+        
+        let leftAxis = self.leftAxis
+        leftAxis.axisMaxValue = Double(1000)
+        leftAxis.enabled = true
+
+        leftAxis.drawGridLinesEnabled = false
+        leftAxis.labelFont = UIFont.systemFontOfSize(0)//[UIFont systemFontOfSize:10.f]
+        leftAxis.labelCount = 0
+        leftAxis.axisLineColor = UIColor.clearColor()
+        leftAxis.spaceTop = 0
+        leftAxis.axisMinValue = 0.0  // this replaces startAtZero = YES
+
     }
 
     /**
@@ -178,8 +202,10 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
         
             if maxValue < chartsData[i].step / 1000 {
                 maxValue = chartsData[i].step / 1000
+
             }
 
+            
             let dataEntry = BarChartDataEntry(value: Double(chartsData[i].step), xIndex: i)
             
             yVals.append(dataEntry)

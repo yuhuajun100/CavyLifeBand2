@@ -88,7 +88,7 @@ class ShowStackedChartsView: BarChartView, ChartViewDelegate {
         descriptionTextColor = UIColor.whiteColor()
         
     }
-    
+       
     /**
      添加网格
      */
