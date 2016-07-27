@@ -281,6 +281,42 @@ struct BindBandInfoStorage {
     
 }
 
+extension BindBandInfoStorage {
+    
+    /**
+     获取手环mac地址正序格式，用于事件统计
+     
+     Cavy2-D525,25:D5:4B:F8:E6:A0 -> A0:E6:F8:4B:D5:25
+     
+     - returns: 
+     */
+    func eventBandMacAddress() -> String {
+        
+        guard defaultBindBand.characters.count > 0 else {
+            
+            return ""
+            
+        }
+                
+        let macAdd = defaultBindBand.componentsSeparatedByString(",")[1]
+        
+        let macAddArr: [String] = macAdd.componentsSeparatedByString(":").reverse()
+        
+        var macStr: String = ""
+        
+        for i in 0..<macAddArr.count {
+            
+            if i == 0 { macStr += macAddArr[i] }
+            else { macStr += ":" + macAddArr[i] }
+            
+        }
+        
+        return macStr
+        
+    }
+
+}
+
 struct UserCoordinateInfo {
     var latitude: String = ""
     var longitude: String = ""

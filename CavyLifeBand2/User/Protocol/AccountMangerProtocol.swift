@@ -273,7 +273,7 @@ extension SignUpDelegate where Self: UIViewController {
                 NetRequestKey.DeviceSerial.rawValue: CavyDefine.bindBandInfos.bindBandInfo.deviceSerial,
                 NetRequestKey.DeviceModel.rawValue: String.deviceModel(),
                 NetRequestKey.AuthKey.rawValue: CavyDefine.gameServerAuthKey,
-                NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.defaultBindBand,
+                NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.eventBandMacAddress(),
                 NetRequestKey.Longitude.rawValue: CavyDefine.userCoordinate.longitude,
                 NetRequestKey.Latitude.rawValue: CavyDefine.userCoordinate.latitude]
     }
@@ -285,7 +285,7 @@ extension SignUpDelegate where Self: UIViewController {
                 NetRequestKey.DeviceSerial.rawValue: CavyDefine.bindBandInfos.bindBandInfo.deviceSerial,
                 NetRequestKey.DeviceModel.rawValue: String.deviceModel(),
                 NetRequestKey.AuthKey.rawValue: CavyDefine.gameServerAuthKey,
-                NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.defaultBindBand,
+                NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.eventBandMacAddress(),
                 NetRequestKey.Longitude.rawValue: CavyDefine.userCoordinate.longitude,
                 NetRequestKey.Latitude.rawValue: CavyDefine.userCoordinate.latitude]
     }
@@ -404,7 +404,7 @@ extension SignInDelegate where Self: UIViewController {
                                                NetRequestKey.DeviceSerial.rawValue: CavyDefine.bindBandInfos.bindBandInfo.deviceSerial,
                                                NetRequestKey.DeviceModel.rawValue: String.deviceModel(),
                                                NetRequestKey.AuthKey.rawValue: CavyDefine.gameServerAuthKey,
-                                               NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.defaultBindBand,
+                                               NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.eventBandMacAddress(),
                                                NetRequestKey.Longitude.rawValue: CavyDefine.userCoordinate.longitude,
                                                NetRequestKey.Latitude.rawValue: CavyDefine.userCoordinate.latitude]
         

@@ -17,7 +17,7 @@ class EventStatisticsApi: NetRequest {
         let parameters: [String: AnyObject] = [NetRequestKey.DeviceSerial.rawValue: CavyDefine.bindBandInfos.bindBandInfo.deviceSerial,
                                                NetRequestKey.DeviceModel.rawValue: String.deviceModel(),
                                                NetRequestKey.AuthKey.rawValue: CavyDefine.gameServerAuthKey,
-                                               NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.defaultBindBand,
+                                               NetRequestKey.BandMac.rawValue: CavyDefine.bindBandInfos.bindBandInfo.eventBandMacAddress(),
                                                NetRequestKey.Longitude.rawValue: CavyDefine.userCoordinate.longitude,
                                                NetRequestKey.Latitude.rawValue: CavyDefine.userCoordinate.latitude,
                                                NetRequestKey.EventType.rawValue: type.rawValue]
