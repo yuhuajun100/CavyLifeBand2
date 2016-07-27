@@ -252,7 +252,7 @@ extension ChartStepRealmProtocol {
             
         case .Week, .Month:
             
-            return returnDayChartsArray(beginTime, endTime: endTime, dataInfo: dataInfo, timeBucket: timeBucket)
+            return returnDayChartsArray(beginTime, endTime: endTime, dataInfo: dataInfo)
             
         }
         
@@ -305,7 +305,7 @@ extension ChartStepRealmProtocol {
     
     /**
      按天分组 一周七天 一个月30天
-     */    func returnDayChartsArray(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>, timeBucket: TimeBucketStyle) -> StepChartsData {
+     */    func returnDayChartsArray(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>) -> StepChartsData {
         
         var stepChartsData = StepChartsData(datas: [], totalStep: 0, totalKilometer: 0, finishTime: 0, averageStep: 0)
         
@@ -331,7 +331,7 @@ extension ChartStepRealmProtocol {
         
         if maxNum != dataInfo.count {
             
-          dataInfoArr  = completeStepData(beginTime, endTime: endTime, dataInfo: dataInfo, timeBucket: timeBucket)
+          dataInfoArr  = completeStepData(beginTime, endTime: endTime, dataInfo: dataInfo)
             
         }
        
@@ -384,47 +384,39 @@ extension ChartStepRealmProtocol {
      - returns: <#return value description#>
      */
     
-    func completeStepData(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>, timeBucket: TimeBucketStyle) -> [NChartStepDataRealm]{
+    func completeStepData(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>) -> [NChartStepDataRealm]{
        
-        var  maxNum: Int = 0
-         let infoCount = dataInfo.count
+        //计算开始到取出第一条数据的时间间隔
+        let firstDistance = (((dataInfo.first?.date.gregorian.date)! - beginTime.gregorian.date)).totalDays
+        //计算最后一条数据 到最后时间的间隔
+        let lastDistance = (endTime.gregorian.date - (dataInfo.last?.date.gregorian.date)!).totalDays
+        
          var resultDataArr: [NChartStepDataRealm] = []
         
         
-        switch timeBucket {
-            
-            
-        case .Week:
-            
-            
-            maxNum = (endTime.gregorian.date - (dataInfo.first?.date)!).totalDays + 1
-            
+        //补齐前端数据
+        if firstDistance > 0 {
            
-            
-        case .Month:
-            
-          
-             maxNum = (endTime.gregorian.date - beginTime).totalDays + 1
-            
-        default:
-            
-            maxNum = 0
-            
-        }
-       
-        
-        if infoCount < maxNum {
-            
-            for _ in 0..<(maxNum - infoCount) {
-                
-                resultDataArr.append(NChartStepDataRealm())
+            for _ in 0..<firstDistance {
+              resultDataArr.append(NChartStepDataRealm())
             }
-            
         }
         
+        
+        //添加查询数据
         for data in dataInfo {
             
             resultDataArr.append(data)
+        }
+        
+        
+        //补齐后段数据
+        if lastDistance > 0 {
+            
+            for _ in 0..<lastDistance {
+              
+                resultDataArr.append(NChartStepDataRealm())
+            }
         }
         
         
