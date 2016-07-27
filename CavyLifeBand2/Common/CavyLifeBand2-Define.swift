@@ -292,24 +292,25 @@ extension BindBandInfoStorage {
      */
     func eventBandMacAddress() -> String {
         
-        guard defaultBindBand.characters.count > 0 else {
+        guard LifeBandBle.shareInterface.getConnectState() == .Connected else {
             
             return ""
             
         }
-                
-        let macAdd = defaultBindBand.componentsSeparatedByString(",")[1]
-        
-        let macAddArr: [String] = macAdd.componentsSeparatedByString(":").reverse()
-        
-        var macStr: String = ""
-        
-        for i in 0..<macAddArr.count {
+
+        guard  BindBandCtrl.bandMacAddress.length == 6 else {
             
-            if i == 0 { macStr += macAddArr[i] }
-            else { macStr += ":" + macAddArr[i] }
+            return ""
             
         }
+        
+        let macStr = String(format: "%02X:%02X:%02X:%02X:%02X:%02X",
+                            BindBandCtrl.bandMacAddress[5],
+                            BindBandCtrl.bandMacAddress[4],
+                            BindBandCtrl.bandMacAddress[3],
+                            BindBandCtrl.bandMacAddress[2],
+                            BindBandCtrl.bandMacAddress[1],
+                            BindBandCtrl.bandMacAddress[0])
         
         return macStr
         
