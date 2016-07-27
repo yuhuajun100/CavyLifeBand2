@@ -235,7 +235,7 @@ extension ChartStepRealmProtocol {
         
     let dataInfo = realm.objects(NChartStepDataRealm).filter("userId == '\(userId)' AND date => %@ AND date <= %@", beginTime.gregorian.beginningOfDay.date, scanTime.gregorian.beginningOfDay.date)
         
-        Log.info("\(dataInfo.count)")
+       
         print("=============\(dataInfo.count)==============")
         
         switch timeBucket {
@@ -252,7 +252,7 @@ extension ChartStepRealmProtocol {
             
         case .Week, .Month:
             
-            return returnDayChartsArray(beginTime, endTime: endTime, dataInfo: dataInfo)
+            return returnDayChartsArray(beginTime, endTime: endTime, dataInfo: dataInfo, timeBucket: timeBucket)
             
         }
         
@@ -305,7 +305,7 @@ extension ChartStepRealmProtocol {
     
     /**
      按天分组 一周七天 一个月30天
-     */    func returnDayChartsArray(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>) -> StepChartsData {
+     */    func returnDayChartsArray(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>, timeBucket: TimeBucketStyle) -> StepChartsData {
         
         var stepChartsData = StepChartsData(datas: [], totalStep: 0, totalKilometer: 0, finishTime: 0, averageStep: 0)
         
@@ -321,7 +321,20 @@ extension ChartStepRealmProtocol {
         
         var indext = 0
         
-        let dataInfoArr = completeStepData(beginTime, endTime: endTime, dataInfo: dataInfo)
+        // 数据补齐操作 在什么时候需要??
+        var dataInfoArr: [NChartStepDataRealm] = []
+
+        for data in dataInfo {
+            dataInfoArr.append(data)
+        }
+        
+        
+        if maxNum != dataInfo.count {
+            
+          dataInfoArr  = completeStepData(beginTime, endTime: endTime, dataInfo: dataInfo, timeBucket: timeBucket)
+            
+        }
+       
         
         for data in dataInfoArr {
            
@@ -371,14 +384,37 @@ extension ChartStepRealmProtocol {
      - returns: <#return value description#>
      */
     
-    func completeStepData(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>) -> [NChartStepDataRealm]{
+    func completeStepData(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>, timeBucket: TimeBucketStyle) -> [NChartStepDataRealm]{
        
-         let maxNum = (NSDate().gregorian.date - beginTime).totalDays + 1
+        var  maxNum: Int = 0
          let infoCount = dataInfo.count
          var resultDataArr: [NChartStepDataRealm] = []
         
-        if infoCount < maxNum {
+        
+        switch timeBucket {
+            
+            
+        case .Week:
+            
+            
+            maxNum = (endTime.gregorian.date - (dataInfo.first?.date)!).totalDays + 1
+            
            
+            
+        case .Month:
+            
+          
+             maxNum = (endTime.gregorian.date - beginTime).totalDays + 1
+            
+        default:
+            
+            maxNum = 0
+            
+        }
+       
+        
+        if infoCount < maxNum {
+            
             for _ in 0..<(maxNum - infoCount) {
                 
                 resultDataArr.append(NChartStepDataRealm())
