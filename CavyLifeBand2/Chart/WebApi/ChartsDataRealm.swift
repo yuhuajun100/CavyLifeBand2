@@ -276,7 +276,8 @@ extension ChartsRealmProtocol {
     /**
      按天分组 一周七天 一个月30天
      
-     */    func returnDayChartsArray(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(ChartStepDataRealm)>?, stepData: StepChartsData?) -> StepChartsData {
+     */
+    func returnDayChartsArray(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(ChartStepDataRealm)>?, stepData: StepChartsData?) -> StepChartsData {
         
         
         // 有数据的天数
@@ -727,8 +728,8 @@ extension ChartsRealmProtocol {
         
         
         let nowTime = NSDate().gregorian.date
-        let newBeginTime = (NSDate().gregorian.beginningOfDay - 6.hour).date
-        var  endDate = (newBeginTime.gregorian + 1.day).date
+        let newBeginTime = (NSDate().gregorian.beginningOfDay - 3.hour).date
+        var endDate = (newBeginTime.gregorian + 12.hour).date
         
         //当前的时间
         if nowTime.compare(endDate) == .OrderedAscending {
@@ -808,15 +809,15 @@ extension ChartsRealmProtocol {
         // 当天数据的特殊处理
         if (nowDate - beginTime).totalMinutes >= 0 && (nowDate - endTime).totalMinutes <= 0 {
             // 有网直接返回
-            guard NetworkReachabilityManager(host: "www.baidu.com")?.isReachable == false else {
-                return reslutData
-            }
+//            guard NetworkReachabilityManager(host: "www.baidu.com")?.isReachable == false else {
+//                return reslutData
+//            }
             
             // 没网显示手环数据库的数据
             
             // 从前天的晚上6点开始算起
-            let newBeginTime = (nowDate.gregorian.beginningOfDay - 6.hour).date
-            let newEndTime = (newBeginTime.gregorian + 1.day).date
+            let newBeginTime = (nowDate.gregorian.beginningOfDay - 3.hour).date
+            let newEndTime = (newBeginTime.gregorian + 12.hour).date
             
             reslutData[(nowDate - beginTime).totalDays] = querySleepInfo(newBeginTime, endTime: newEndTime)
             

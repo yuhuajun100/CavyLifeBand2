@@ -79,6 +79,11 @@ struct UpdateFWViewModel: MenuProtocol, FirmwareDownload {
                 
                 requestAlert.dismissVC(completion: nil)
                 
+                if localVersion == data.data.version {
+                    CavyLifeBandAlertView.sharedIntance.showViewTitle(message: L10n.UpdateFirmwareIsNewVersionAlertMsg.string)
+                    return
+                }
+                
                 let localIsLast = localVersion.compare(data.data.version, options: .NumericSearch, range: nil, locale: nil) == .OrderedDescending
                 
                 guard localIsLast == false else {

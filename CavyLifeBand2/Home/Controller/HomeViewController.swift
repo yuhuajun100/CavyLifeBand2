@@ -114,11 +114,23 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
      */
     func bandConnect() {
         
-
         // 手环连接 自动同步数据
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(2 * NSEC_PER_SEC)), dispatch_get_main_queue ()) {
             // 等待两秒 连接手环的时间
-            self.scrollView.mj_header.beginRefreshing()
+                        
+            let lifeBandModel = LifeBandModelType.LLA.rawValue | LifeBandModelType.Step.rawValue | LifeBandModelType.Tilt.rawValue | LifeBandModelType.Alarm.rawValue | LifeBandModelType.Alert.rawValue
+            LifeBandCtrl.shareInterface.getLifeBandInfo {
+                
+                // 如果不等于生活手环模式，则重新设置生活手环模式
+                if $0.model & lifeBandModel  != lifeBandModel {
+                    LifeBandCtrl.shareInterface.seLifeBandModel()
+                }
+                
+                BindBandCtrl.fwVersion = $0.fwVersion
+                
+                self.scrollView.mj_header.beginRefreshing()
+                
+            }
             
         }
         rightBtn?.setBackgroundImage(UIImage(asset: .HomeBandMenu), forState: .Normal)

@@ -87,5 +87,11 @@ extension String {
         return UIDevice.deviceModelReadable() + ",iPhone OS " + UIDevice.systemVersion()
         
     }
+    
+    static func loginUserAvatarName() -> String {
+        
+        return "user-" + CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId
+    
+    }
 
 }
