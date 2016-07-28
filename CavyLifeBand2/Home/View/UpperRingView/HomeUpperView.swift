@@ -196,7 +196,7 @@ class HomeUpperView: UIView, UserInfoRealmOperateDelegate, ChartsRealmProtocol, 
         let sleepTarget = userInfo.sleepGoal
 
         // 计步睡眠 当前值
-        let resultSeelp = self.querySleepNumber(NSDate().gregorian.beginningOfDay.date, endTime:NSDate()).first //self.queryTodaySleepInfo()
+        let resultSeelp = self.querySleepNumber(NSDate().gregorian.beginningOfDay.date, endTime: NSDate()).first //self.queryTodaySleepInfo()
 
         let sleepCurrentNumber = (resultSeelp!.deepSleep + resultSeelp!.lightSleep) ?? 0  //Int(resultSeelp.0)
 
