@@ -315,6 +315,36 @@ extension BindBandInfoStorage {
         return macStr
         
     }
+    
+    
+    func eventBandMacAddressFromUserCache() -> String {
+        
+        let userKey = "CavyAppMAC_" + CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId
+        
+        guard let macAdd = userBindBand[userKey] else {
+            
+            return ""
+        
+        }
+        
+        guard  macAdd.length == 6 else {
+            
+            return ""
+            
+        }
+        
+        let macStr = String(format: "%02X:%02X:%02X:%02X:%02X:%02X",
+                            BindBandCtrl.bandMacAddress[5],
+                            BindBandCtrl.bandMacAddress[4],
+                            BindBandCtrl.bandMacAddress[3],
+                            BindBandCtrl.bandMacAddress[2],
+                            BindBandCtrl.bandMacAddress[1],
+                            BindBandCtrl.bandMacAddress[0])
+        
+        return macStr
+        
+    
+    }
 
 }
 

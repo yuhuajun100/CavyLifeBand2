@@ -876,6 +876,16 @@ extension ChartsRealmProtocol {
         
         let startTime = realmSleepData[0].time.gregorian.beginningOfDay.date
         
+//        let endTime = realmStepData.last!.time.gregorian.beginningOfDay.date
+//        
+//        if (endTime - startTime).totalDays > 9 {
+//        
+//            let realStart = (realmStepData.last!.time.gregorian - 9.day).date
+//            
+//            realmStepData = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND time >= %@ AND time <= %@", realStart, realmStepData.last!.time)
+//            
+//        }
+        
         let format = NSDateFormatter()
         
         format.dateFormat = "yyyy-MM-dd"

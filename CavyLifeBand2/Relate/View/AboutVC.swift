@@ -28,8 +28,10 @@ class AboutVC: UIViewController, BaseViewControllerPresenter {
         
         self.automaticallyAdjustsScrollViewInsets = false
         
-        tableDataSource = [AboutCellModel(title: L10n.RelateAboutCurrentVersion.string, info: ez.appVersion ?? ""),
-                           AboutCellModel(title: L10n.RelateAboutFunctionIntroduce.string),
+//        AboutCellModel(title: L10n.RelateAboutCurrentVersion.string, info: ez.appVersion ?? ""),
+        
+        
+        tableDataSource = [AboutCellModel(title: L10n.RelateAboutFunctionIntroduce.string),
                            AboutCellModel(title: L10n.RelateAboutGoOfficialWebsite.string)]
         
         updateNavUI()
@@ -74,6 +76,11 @@ class AboutVC: UIViewController, BaseViewControllerPresenter {
         tableView.layer.cornerRadius = CavyDefine.commonCornerRadius
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.bounces = false
+        
+        tableView.snp_makeConstraints { (make) in
+            make.height.equalTo(tableDataSource.count * 50 + 2 * 10)
+        }
         
     }
     
