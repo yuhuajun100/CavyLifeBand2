@@ -161,11 +161,12 @@ extension NetRequest {
         
         
         //清空登录信息
-        
+        UIImage.deleteCacheImageWithName()
         CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId = ""
         CavyDefine.loginUserBaseInfo.loginUserInfo.loginUsername = ""
         CavyDefine.loginUserBaseInfo.loginUserInfo.loginAuthToken = ""
         LifeBandBle.shareInterface.bleDisconnect()
+        
         
         let alertView = UIAlertController(title: L10n.AlertTipsMsg.string, message: L10n.AlertReloginTitle.string, preferredStyle: .Alert)
         

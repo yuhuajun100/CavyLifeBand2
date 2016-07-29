@@ -222,6 +222,9 @@ class ContactsAccountInfoVC: UIViewController, BaseViewControllerPresenter, User
                                                     NetRequestKey.Latitude.rawValue: CavyDefine.userCoordinate.latitude]
             
             NetWebApi.shareApi.netPostRequest(WebApiMethod.Logout.description, para: parameters, modelObject: CommenMsgResponse.self, successHandler: { [unowned self] (data) in
+                
+                UIImage.deleteCacheImageWithName()
+                
                 CavyDefine.loginUserBaseInfo.loginUserInfo.loginUserId = ""
                 CavyDefine.loginUserBaseInfo.loginUserInfo.loginUsername = ""
                 CavyDefine.loginUserBaseInfo.loginUserInfo.loginAuthToken = ""
@@ -229,6 +232,7 @@ class ContactsAccountInfoVC: UIViewController, BaseViewControllerPresenter, User
                 UIApplication.sharedApplication().keyWindow?.setRootViewController(StoryboardScene.Main.instantiateMainPageView(), transition: CATransition())
                 self.loadingView.stopAnimating()
                 LifeBandBle.shareInterface.bleDisconnect()
+                
             }, failureHandler: { (msg) in
                 CavyLifeBandAlertView.sharedIntance.showViewTitle(message: msg.msg)
                 

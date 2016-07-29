@@ -48,19 +48,22 @@ extension RootViewController: LifeBandBleDelegate {
             
             LifeBandCtrl.shareInterface.setDateToBand(NSDate())
             
-            let lifeBandModel = LifeBandModelType.LLA.rawValue | LifeBandModelType.Step.rawValue | LifeBandModelType.Tilt.rawValue | LifeBandModelType.Alarm.rawValue | LifeBandModelType.Alert.rawValue
-            LifeBandCtrl.shareInterface.getLifeBandInfo {
-                
-                // 如果不等于生活手环模式，则重新设置生活手环模式
-                if $0.model & lifeBandModel  != lifeBandModel {
-                    LifeBandCtrl.shareInterface.seLifeBandModel()
-                }
-                
-                BindBandCtrl.fwVersion = $0.fwVersion
-                
-            }
+            
+//            let lifeBandModel = LifeBandModelType.LLA.rawValue | LifeBandModelType.Step.rawValue | LifeBandModelType.Tilt.rawValue | LifeBandModelType.Alarm.rawValue | LifeBandModelType.Alert.rawValue
+//            LifeBandCtrl.shareInterface.getLifeBandInfo {
+//                
+//                // 如果不等于生活手环模式，则重新设置生活手环模式
+//                if $0.model & lifeBandModel  != lifeBandModel {
+//                    LifeBandCtrl.shareInterface.seLifeBandModel()
+//                }
+//                
+//                BindBandCtrl.fwVersion = $0.fwVersion
+//                
+//            }
             
             LifeBandCtrl.shareInterface.installButtonEven()
+            
+            
 //            self.syncDataFormBand()
             NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
             

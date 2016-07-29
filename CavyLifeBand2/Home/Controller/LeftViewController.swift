@@ -75,7 +75,16 @@ class LeftMenViewController: UIViewController, HomeUserDelegate, UserInfoRealmOp
     func updateUI(result: Results<UserInfoModel>) {
         
         self.userName.text = result.first?.nickname ?? ""
-        self.iconImageView.af_setCircleImageWithURL(NSURL(string: result.first?.avatarUrl ?? "")!, placeholderImage: UIImage(asset: .DefaultHead_big))
+        
+        if let avatar = UIImage.imageWithCacheName(String.loginUserAvatarName()) {
+            iconImageView.image = avatar
+            iconImageView.layer.cornerRadius = iconImageView.size.width / 2.0
+            iconImageView.clipsToBounds = true
+        } else {
+            iconImageView.af_setCircleImageWithURL(NSURL(string: result.first?.avatarUrl ?? "")!, placeholderImage: UIImage(asset: .DefaultHead_big))
+        }
+        
+//        self.iconImageView.af_setCircleImageWithURL(NSURL(string: result.first?.avatarUrl ?? "")!, placeholderImage: UIImage(asset: .DefaultHead_big))
         self.account.text = CavyDefine.loginUserBaseInfo.loginUserInfo.loginUsername
     
     }

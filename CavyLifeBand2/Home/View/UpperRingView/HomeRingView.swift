@@ -191,16 +191,16 @@ class HomeRingView: UIView {
             return
         }else if percent > 0 {
             
-            let lineBeginPath = UIBezierPath(arcCenter: center, radius: redius, startAngle: startA, endAngle: middleA, clockwise: false)
-
-            lineBeginLayer.path = lineBeginPath.CGPath
-            self.layer.addSublayer(lineBeginLayer)
+//            let lineBeginPath = UIBezierPath(arcCenter: center, radius: redius, startAngle: startA, endAngle: middleA, clockwise: false)
+//
+//            lineBeginLayer.path = lineBeginPath.CGPath
+//            self.layer.addSublayer(lineBeginLayer)
             
         } else if percent >= 100 {
             
-            let lineBeginPath = UIBezierPath(arcCenter: center, radius: redius, startAngle: startA, endAngle: CGFloat(M_PI - M_PI * 2), clockwise: false)
-            lineBeginLayer.path = lineBeginPath.CGPath
-            self.layer.addSublayer(lineBeginLayer)
+//            let lineBeginPath = UIBezierPath(arcCenter: center, radius: redius, startAngle: startA, endAngle: CGFloat(M_PI - M_PI * 2), clockwise: false)
+//            lineBeginLayer.path = lineBeginPath.CGPath
+//            self.layer.addSublayer(lineBeginLayer)
         }
         
         //环形
@@ -210,7 +210,7 @@ class HomeRingView: UIView {
         ringLayer.strokeColor = ringColor.CGColor
         ringLayer.lineWidth = ringWidth
         ringLayer.lineCap = kCALineCapRound
-        let path = UIBezierPath(arcCenter: center, radius: redius, startAngle: middleA, endAngle: endA, clockwise: false)
+        let path = UIBezierPath(arcCenter: center, radius: redius, startAngle: startA, endAngle: endA, clockwise: false)
         ringLayer.path = path.CGPath
         self.layer.addSublayer(ringLayer)
 

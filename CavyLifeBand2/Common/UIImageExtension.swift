@@ -26,6 +26,47 @@ extension UIImage {
 
         return  newImg
     }
+    
+    /**
+     通过沙盒存储图片名返回图片
+     
+     - parameter name:
+     
+     - returns: 
+     */
+    static func imageWithCacheName(name: String) -> UIImage? {
+        
+        let urls = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true)
+        
+        var savePath = urls[0]
+        
+        let imageFullName = name.stringByAppendingString(".png")
+        
+        savePath = savePath + "/" + imageFullName
+        
+        let avatar = UIImage.init(contentsOfFile: savePath)
+        
+        return avatar
+    
+    }
+    
+    static func deleteCacheImageWithName(name: String = String.loginUserAvatarName()) {
+        
+        let urls = NSSearchPathForDirectoriesInDomains(.CachesDirectory, .UserDomainMask, true)
+        
+        var savePath = urls[0]
+        
+        let imageFullName = name.stringByAppendingString(".png")
+        
+        savePath = savePath + "/" + imageFullName
+        
+        do {
+            try NSFileManager.defaultManager().removeItemAtPath(savePath)
+        } catch {
+        
+        }
+    
+    }
 
     /**
      将图片存到沙盒的Cache文件

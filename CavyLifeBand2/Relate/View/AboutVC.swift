@@ -174,6 +174,8 @@ extension AboutVC: UITableViewDataSource {
         
         let cell = tableView.dequeueReusableCellWithIdentifier(aboutCellID, forIndexPath: indexPath) as? AboutCell
         
+        cell?.accessoryType = .DisclosureIndicator
+        
         cell?.configure(tableDataSource[indexPath.row])
         
         return cell!

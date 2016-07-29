@@ -110,7 +110,9 @@ extension PresonInfoCellViewModel: UIImagePickerControllerDelegate, UINavigation
         
         newImage = newImage.af_imageScaledToSize(CGSize(width: 128, height: 128))
         
-        guard let savePath: String = newImage.writeToChacheDocument(String.random(30, "a"..."z")) else {
+        let userAvatarKey = String.loginUserAvatarName()
+        
+        guard let savePath: String = newImage.writeToChacheDocument(userAvatarKey) else {
             Log.error("图片保存失败")
             
             CavyLifeBandAlertView.sharedIntance.showViewTitle(message: "图片保存失败，请重试")
