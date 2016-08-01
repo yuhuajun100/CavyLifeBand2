@@ -152,19 +152,19 @@ extension RootViewController: ChartsRealmProtocol {
      - author: sim cai
      - date: 2016-05-31
      */
-    func startSyncDataTime() {
-        
-        // 连接成功后会同步信息，所以这里在10分钟后再启动
-        
-        NSTimer.runThisAfterDelay(seconds: 60 * 10) {
-            self.syncDataTime = NSTimer.runThisEvery(seconds: 60 * 10) { _ in
-//                self.syncDataFormBand()
-                NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
-
-            }
-        }
-        
-    }
+//    func startSyncDataTime() {
+//        
+//        // 连接成功后会同步信息，所以这里在10分钟后再启动
+//        
+//        NSTimer.runThisAfterDelay(seconds: 60 * 10) {
+//            self.syncDataTime = NSTimer.runThisEvery(seconds: 60 * 10) { _ in
+////                self.syncDataFormBand()
+//                NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
+//
+//            }
+//        }
+//        
+//    }
     
     /**
      蓝牙状态改变

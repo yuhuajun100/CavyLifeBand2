@@ -865,7 +865,7 @@ extension ChartsRealmProtocol {
      */
     func queryUploadBandData() -> ([NSDictionary], NSDate, NSDate) {
         
-        var realmSleepData = realm.objects(ChartSleepDataRealm).filter("userId == '\(userId)' AND syncState == %d", ChartBandDataSyncState.UnSync.rawValue).sorted("time", ascending: true)
+        let realmSleepData = realm.objects(ChartSleepDataRealm).filter("userId == '\(userId)' AND syncState == %d", ChartBandDataSyncState.UnSync.rawValue).sorted("time", ascending: true)
         
         let realmStepData = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND syncState == %d", ChartBandDataSyncState.UnSync.rawValue).sorted("time", ascending: true)
         
@@ -873,26 +873,80 @@ extension ChartsRealmProtocol {
             return ([], NSDate(), NSDate())
         }
         
-        let startTime = realmSleepData[0].time.gregorian.beginningOfDay.date
+        var sleepDate = [NSDate]()
+        var stepDate = [NSDate]()
         
-        let endTime = realmStepData.last!.time.gregorian.beginningOfDay.date
+        var sleepData = [ChartSleepDataRealm]()
+        var stepData = [ChartStepDataRealm]()
         
-        if (endTime - startTime).totalDays > 9 {
-        
-            let realStart = (realmStepData.last!.time.gregorian - 9.day).date
+        // 数据去重
+        for i in 0..<realmSleepData.count {
             
-            realmSleepData = realm.objects(ChartSleepDataRealm).filter("userId == '\(userId)' AND time >= %@ AND time <= %@", realStart, realmStepData.last!.time)
+            if !sleepDate.contains(realmSleepData[i].time) {
+                
+                sleepDate.append(realmSleepData[i].time)
+                sleepData.append(realmSleepData[i])
+                
+            }
             
         }
+        
+        for i in 0..<realmStepData.count {
+            
+            if !stepDate.contains(realmStepData[i].time) {
+                
+                stepDate.append(realmStepData[i].time)
+                stepData.append(realmStepData[i])
+                
+            }
+            
+        }
+        
+        //数据数量不一样 剪成一样
+        if stepData.count != sleepData.count {
+        
+            if stepData.count > sleepData.count {
+                
+                for _ in 0..<stepData.count - sleepData.count {
+                    
+                    stepData.removeAtIndex(0)
+                
+                }
+                
+            } else {
+                
+                for _ in 0..<sleepData.count - stepData.count {
+                    
+                    sleepData.removeAtIndex(0)
+                    
+                }
+            }
+            
+        }
+        
+        let maxNum = 10 * 144
+        
+        if stepData.count > maxNum {
+            
+            for _ in 0..<(stepData.count - maxNum) {
+            
+                sleepData.removeAtIndex(0)
+                stepData.removeAtIndex(0)
+                
+            }
+            
+        
+        }
+        
+        let startTime = stepData[0].time.gregorian.beginningOfDay.date
         
         let format = NSDateFormatter()
         
         format.dateFormat = "yyyy-MM-dd"
         
-        var reslutArray: [NSDictionary] = []
+        var reslutArray: [NSDictionary] = [NSDictionary]()
         
-        
-        for i in 0..<realmSleepData.count {
+        for i in 0..<stepData.count {
             
             let tilt = realmSleepData[i].tilts
             let step = realmStepData[i].step
