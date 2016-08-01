@@ -216,43 +216,32 @@ extension ChartStepRealmProtocol {
      查询 日周月下 某一时段的 数据信息
      */
     func queryNStepNumber(beginTime: NSDate, endTime: NSDate, timeBucket: TimeBucketStyle) -> StepChartsData? {
-        
-        let today = endTime.gregorian.isToday
-        // 判断是否是当然 如果是当天 则查询日期往前推一天
-        var scanTime: NSDate
-        
-        if today {
-            
-          scanTime = NSDate(timeInterval: -24 * 60 * 60, sinceDate: endTime)
-            
-        }else
-        {
-            scanTime = endTime
-        }
     
-        
         //转换时间格式
         
-    let dataInfo = realm.objects(NChartStepDataRealm).filter("userId == '\(userId)' AND date => %@ AND date <= %@", beginTime.gregorian.beginningOfDay.date, scanTime.gregorian.beginningOfDay.date)
+        let nowDate = NSDate()
         
-       
-        print("=============\(dataInfo.count)==============")
+        var scanTime: NSDate = endTime
         
-        switch timeBucket {
+        if (nowDate - beginTime).totalMinutes >= 0 && (nowDate - endTime).totalMinutes <= 0 {
             
-        case .Day:
+            scanTime = (NSDate().gregorian.beginningOfDay - 1.seconds).date
+        }
+        
+        let dataInfo = realm.objects(NChartStepDataRealm).filter("userId == '\(userId)' AND date => %@ AND date <= %@", beginTime.gregorian.beginningOfDay.date, scanTime)
             
-            if today {
-                return returnHourChartsArray(nil)
-            }else{
+           
+            print("=============\(dataInfo.count)==============")
+            
+            switch timeBucket {
+                
+            case .Day:
+
                 return returnHourChartsArray(dataInfo)
-            }
-            
-            
-            
-        case .Week, .Month:
-            
-            return returnDayChartsArray(beginTime, endTime: endTime, dataInfo: dataInfo)
+                
+            case .Week, .Month:
+                
+                return returnDayChartsArray(beginTime, endTime: endTime, dataInfo: dataInfo)
             
         }
         
@@ -386,41 +375,94 @@ extension ChartStepRealmProtocol {
     
     func completeStepData(beginTime: NSDate, endTime: NSDate, dataInfo: Results<(NChartStepDataRealm)>) -> [NChartStepDataRealm]{
        
-        //计算开始到取出第一条数据的时间间隔
-        let firstDistance = (((dataInfo.first?.date.gregorian.date)! - beginTime.gregorian.date)).totalDays
-        //计算最后一条数据 到最后时间的间隔
-        let lastDistance = (endTime.gregorian.date - (dataInfo.last?.date.gregorian.date)!).totalDays
-        
+//        //计算开始到取出第一条数据的时间间隔
+//        
+//        let firstDate = (dataInfo.first?.date.gregorian.date) ?? beginTime.gregorian.date
+//        
+//        let lastDate = (dataInfo.last?.date.gregorian.date) ?? endTime.gregorian.date
+//        
+//        let firstDistance = ((firstDate - beginTime.gregorian.date)).totalDays
+//        //计算最后一条数据 到最后时间的间隔
+//        let lastDistance = (endTime.gregorian.date - (dataInfo.last?.date.gregorian.date)!).totalDays
+//        
          var resultDataArr: [NChartStepDataRealm] = []
+//
+//        
+//        //补齐前端数据
+//        if firstDistance > 0 {
+//           
+//            for _ in 0..<firstDistance {
+//              resultDataArr.append(NChartStepDataRealm())
+//            }
+//        }
+//        
+//        
+//        //添加查询数据
+//        for data in dataInfo {
+//            
+//            resultDataArr.append(data)
+//        }
+//        
+//        
+//        //补齐后段数据
+//        if lastDistance > 0 {
+//            
+//            for _ in 0..<lastDistance {
+//              
+//                resultDataArr.append(NChartStepDataRealm())
+//            }
+//        }
+//        
+//        
+//        return resultDataArr
         
         
-        //补齐前端数据
-        if firstDistance > 0 {
-           
-            for _ in 0..<firstDistance {
-              resultDataArr.append(NChartStepDataRealm())
-            }
-        }
+        let dayTotal = (endTime - beginTime).totalDays
         
+        var realmIndex = 0
         
-        //添加查询数据
-        for data in dataInfo {
+        Log.info("querySleepInfoDays Begin \(beginTime.toString(format: "yyyy-MM-dd")) - \(endTime.toString(format: "yyyy-MM-dd")))")
+        
+        /// 数据库中没有数据
+        if dataInfo.count == 0 {
             
-            resultDataArr.append(data)
-        }
-        
-        
-        //补齐后段数据
-        if lastDistance > 0 {
-            
-            for _ in 0..<lastDistance {
-              
+            for _ in 0...dayTotal {
+                
                 resultDataArr.append(NChartStepDataRealm())
+                
             }
+            
+        } else {
+            
+            /// 转化数据库中的数据，并做断档数据补0
+            for i in 0...dayTotal {
+                
+                if realmIndex < dataInfo.count {
+                    
+                    if ((beginTime.gregorian + i.day).beginningOfDay.date - dataInfo[realmIndex].date).totalDays == 0 {
+                        
+                        resultDataArr.append(dataInfo[realmIndex])
+                        
+                        realmIndex += 1
+                        
+                    } else {
+                        resultDataArr.append(NChartStepDataRealm())
+                    }
+                    
+                } else {
+                    
+                    resultDataArr.append(NChartStepDataRealm())
+                    
+                }
+                
+            }
+            
+            Log.info("querySleepInfoDays end \(beginTime.toString(format: "yyyy-MM-dd")) - \(endTime.toString(format: "yyyy-MM-dd")))")
+            
         }
-        
         
         return resultDataArr
+
     }
     
     

@@ -199,21 +199,19 @@ extension ChartsRealmProtocol {
                 
                 return returnHourChartsArray(dataInfo, stepData: nil)
                 
-            }else
-                
-            {
+            } else {
                 
                 return returnHourChartsArray(nil, stepData: serverData)
             }
             
-            
-            
         case .Week, .Month:
             
+//            if endTime.gregorian.isToday {
+            let nowDate = NSDate()
             
-            if endTime.gregorian.isToday {
-                
-                let dataInfo = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND time > %@ AND time < %@", beginTime.timeStringChangeToNSDate(.Day).0, endTime.timeStringChangeToNSDate(.Day).1)
+            if (nowDate - beginTime).totalMinutes >= 0 && (nowDate - endTime).totalMinutes <= 0 {
+            
+                let dataInfo = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND time >= %@ AND time <= %@", nowDate.gregorian.beginningOfDay.date, (nowDate.gregorian.beginningOfDay + 1.day - 1.seconds).date)
                 
                 return returnDayChartsArray(beginTime, endTime: endTime, dataInfo: dataInfo, stepData: serverData)
                 
