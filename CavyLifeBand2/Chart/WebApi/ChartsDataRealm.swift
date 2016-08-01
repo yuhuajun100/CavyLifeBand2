@@ -865,7 +865,7 @@ extension ChartsRealmProtocol {
      */
     func queryUploadBandData() -> ([NSDictionary], NSDate, NSDate) {
         
-        let realmSleepData = realm.objects(ChartSleepDataRealm).filter("userId == '\(userId)' AND syncState == %d", ChartBandDataSyncState.UnSync.rawValue).sorted("time", ascending: true)
+        var realmSleepData = realm.objects(ChartSleepDataRealm).filter("userId == '\(userId)' AND syncState == %d", ChartBandDataSyncState.UnSync.rawValue).sorted("time", ascending: true)
         
         let realmStepData = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND syncState == %d", ChartBandDataSyncState.UnSync.rawValue).sorted("time", ascending: true)
         
@@ -875,15 +875,15 @@ extension ChartsRealmProtocol {
         
         let startTime = realmSleepData[0].time.gregorian.beginningOfDay.date
         
-//        let endTime = realmStepData.last!.time.gregorian.beginningOfDay.date
-//        
-//        if (endTime - startTime).totalDays > 9 {
-//        
-//            let realStart = (realmStepData.last!.time.gregorian - 9.day).date
-//            
-//            realmStepData = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND time >= %@ AND time <= %@", realStart, realmStepData.last!.time)
-//            
-//        }
+        let endTime = realmStepData.last!.time.gregorian.beginningOfDay.date
+        
+        if (endTime - startTime).totalDays > 9 {
+        
+            let realStart = (realmStepData.last!.time.gregorian - 9.day).date
+            
+            realmSleepData = realm.objects(ChartSleepDataRealm).filter("userId == '\(userId)' AND time >= %@ AND time <= %@", realStart, realmStepData.last!.time)
+            
+        }
         
         let format = NSDateFormatter()
         
