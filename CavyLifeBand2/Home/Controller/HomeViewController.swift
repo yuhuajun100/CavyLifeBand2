@@ -93,7 +93,16 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
         addRefershHeader()
         addNotificationObserver(RefreshStyle.BeginRefresh.rawValue, selector: #selector(beginBandRefersh))
         addNotificationObserver(RefreshStyle.StopRefresh.rawValue, selector: #selector(endBandRefersh))
+        
+        addNotificationObserver(NotificationName.HomeRefreshDate.rawValue, selector: #selector(HomeViewController.configureHomeDate))
  
+    }
+    
+    func configureHomeDate() {
+        dateView.configureDate()
+        timeLineView.configureDate()
+        
+        upperView?.updateUpperViewRing()
     }
 
     /**

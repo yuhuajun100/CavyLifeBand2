@@ -375,6 +375,7 @@ enum NotificationName: String {
     case HomeShowPKView                     // 主页push PK页面
     case HomeShowAchieveView                  // 主页push 徽章页面
     case HomeShowHealthyView                // 主页push 健康页面
+    case HomeRefreshDate                    // 进入前台刷新日期
     
 }
 

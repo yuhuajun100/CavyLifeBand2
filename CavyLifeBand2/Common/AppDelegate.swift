@@ -289,9 +289,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
         if LifeBandBle.shareInterface.centraManager?.state == .PoweredOn && LifeBandBle.shareInterface.getConnectState() == .Connected {
         
             NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
-            
         }
         
+        NSNotificationCenter.defaultCenter().postNotificationName(NotificationName.HomeRefreshDate.rawValue, object: nil)
         EventStatisticsApi.shareApi.uploadEventInfo(ActivityEventType.AppOpen)
         
     }
