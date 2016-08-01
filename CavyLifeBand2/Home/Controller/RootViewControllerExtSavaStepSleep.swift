@@ -29,6 +29,12 @@ extension RootViewController: ChartsRealmProtocol {
             
         }
         
+        if let realmUserInfo: UserInfoModel = queryUserInfo(userId) {
+            if (syncDate - realmUserInfo.signUpDate).totalSeconds < 0 {
+                syncDate = realmUserInfo.signUpDate.gregorian.beginningOfDay.date
+            }
+        }
+        
         LifeBandSyncData.shareInterface.syncDataFormBand(syncDate) {
             
             $0.success { titlsAndSteps in
