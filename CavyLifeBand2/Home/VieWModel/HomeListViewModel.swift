@@ -76,10 +76,10 @@ struct HomeListAchiveViewModel: HomeListViewModelProtocol {
     // 0 ~ 5 共6个徽章 返回编号
     init(medalIndex: Int) {
         
-        self.medalIndex = medalIndex
+        self.medalIndex = medalIndex - 1
         
         let stepArray = [5000, 20000, 100000, 500000, 1000000, 5000000]
-        resultNum = NSMutableAttributedString().attributeString(String(stepArray[medalIndex]), numSize: 28, unit: L10n.GuideStep.string, unitSize: 12)
+        resultNum = NSMutableAttributedString().attributeString(String(stepArray[self.medalIndex]), numSize: 28, unit: L10n.GuideStep.string, unitSize: 12)
     }
     
     func onClickCell() {
