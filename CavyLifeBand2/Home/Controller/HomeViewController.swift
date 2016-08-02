@@ -141,6 +141,8 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
                 
             }
             
+            LifeBandCtrl.shareInterface.installButtonEven()
+            
         }
         rightBtn?.setBackgroundImage(UIImage(asset: .HomeBandMenu), forState: .Normal)
         

@@ -406,6 +406,7 @@ extension LifeBandBle: CBCentralManagerDelegate {
     
     func centralManager(central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: NSError?) {
         NSNotificationCenter.defaultCenter().postNotificationName(BandBleNotificationName.BandDesconnectNotification.rawValue, object: nil)
+        NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
         EventStatisticsApi.shareApi.uploadEventInfo(ActivityEventType.BandDisconnect)
     }
     
