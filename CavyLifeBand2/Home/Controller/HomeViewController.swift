@@ -419,10 +419,10 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
      */
     func showStepDetailView(){
         
-        let stepVM = ChartViewModel(title: L10n.ContactsShowInfoStep.string, chartStyle: .StepChart)
-        let chartVC = ChartsViewController()
-        chartVC.configChartsView(stepVM)
-        self.pushVC(chartVC)
+//        let stepVM = ChartViewModel(title: L10n.ContactsShowInfoStep.string, chartStyle: .StepChart)
+//        let chartVC = ChartsViewController()
+//        chartVC.configChartsView(stepVM)
+//        self.pushVC(chartVC)
         
     }
     
@@ -431,10 +431,10 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
      */
     func showSleepDetailView(){
         
-        let sleepVM = ChartViewModel(title: L10n.ContactsShowInfoSleep.string, chartStyle: .SleepChart)
-        let chartVC = ChartsViewController()
-        chartVC.configChartsView(sleepVM)
-        self.pushVC(chartVC)
+//        let sleepVM = ChartViewModel(title: L10n.ContactsShowInfoSleep.string, chartStyle: .SleepChart)
+//        let chartVC = ChartsViewController()
+//        chartVC.configChartsView(sleepVM)
+//        self.pushVC(chartVC)
         
     }
     
