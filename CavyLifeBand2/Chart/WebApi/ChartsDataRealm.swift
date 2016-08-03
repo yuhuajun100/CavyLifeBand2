@@ -985,6 +985,7 @@ extension ChartsRealmProtocol {
         setSleepChartBandDataSynced(startDate, endDate: endDate)
         setStepChartBandDataSynced(startDate, endDate: endDate)
         NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
+        Log.info("设置本地数据同步标志")
     }
     
     /**

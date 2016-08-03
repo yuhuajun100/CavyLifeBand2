@@ -19,6 +19,8 @@ struct CavyDefine {
     
     // 新的后台服务器地址
     static let webServerAddr = "http://pay.tunshu.com/live/api/v1/"
+    
+    static let baiduServerKey = "7mtU3ocqPLj4Posdi42BI1qsIZFGLdUq"
 
     // webApi地址
     static let webApiAddr = serverAddr + "/api.do"

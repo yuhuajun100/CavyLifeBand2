@@ -35,11 +35,13 @@ extension RootViewController: ChartsRealmProtocol {
             }
         }
         
+        Log.info("开始刷新")
+        
         LifeBandSyncData.shareInterface.syncDataFormBand(syncDate) {
             
             $0.success { titlsAndSteps in
                 
-                
+                Log.info("同步到手环数据")
                 let steps = titlsAndSteps.map { return ($0.date, $0.steps) }
                 let sleeps = titlsAndSteps.map { return ($0.date, $0.tilts) }
                 
@@ -48,7 +50,7 @@ extension RootViewController: ChartsRealmProtocol {
                 self.saveStepsToRealm(steps)
                 
                 let uploadData = self.queryUploadBandData()
-                
+                Log.info("获取上报数据")
                 guard uploadData.0.count > 0 else {
                     // 不需要同步也要让下拉消失
                     NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
@@ -58,10 +60,11 @@ extension RootViewController: ChartsRealmProtocol {
                 UploadBandData.shareApi.uploadBandData(uploadData.0, successHandler: {
                     [unowned self] data in
                     self.setChartBandDataSynced(uploadData.1, endDate: uploadData.2)
-                    
+                    Log.info("上报数据成功")
                 }) {
                     // 发送通知让主页停止同步数据下拉消失
                     NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
+                    Log.info("上报数据失败")
                 }
             
             }.failure { error in
