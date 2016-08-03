@@ -14,7 +14,7 @@ import Alamofire
 import Realm
 
 /// 长时间没有数据，12 = 2小时， 12 * 10分钟
-let noSleepTime = 12
+let noSleepTime = 9
 
 
 // MARK: Step
@@ -719,18 +719,18 @@ extension ChartsRealmProtocol {
     func queryTodaySleepInfo() -> (Double, Double, Double) {
         
         
-        let nowTime = NSDate().gregorian.date
-        let newBeginTime = (NSDate().gregorian.beginningOfDay - 3.hour).date
-        var endDate = (newBeginTime.gregorian + 12.hour).date
+//        let nowTime = NSDate().gregorian.date
+//        let newBeginTime = (NSDate().gregorian.beginningOfDay - 3.hour).date
+//        var endDate = (newBeginTime.gregorian + 12.hour).date
+//        
+//        //当前的时间
+//        if nowTime.compare(endDate) == .OrderedAscending {
+//            
+//            endDate = nowTime
+//            
+//        }
         
-        //当前的时间
-        if nowTime.compare(endDate) == .OrderedAscending {
-            
-            endDate = nowTime
-            
-        }
-        
-        return querySleepInfo(newBeginTime, endTime: endDate)
+        return getTodaySleepRingData()
         
     }
     
@@ -807,11 +807,7 @@ extension ChartsRealmProtocol {
 //            
             // 没网显示手环数据库的数据
             
-            // 从前天的晚上6点开始算起
-            let newBeginTime = (nowDate.gregorian.beginningOfDay - 3.hour).date
-            let newEndTime = (newBeginTime.gregorian + 12.hour).date
-            
-            reslutData[(nowDate - beginTime).totalDays] = querySleepInfo(newBeginTime, endTime: newEndTime)
+            reslutData[(nowDate - beginTime).totalDays] = getTodaySleepRingData()
             
             return reslutData
             
@@ -1040,6 +1036,64 @@ extension ChartsRealmProtocol {
         }
         
     }
+    
+    /**
+     当天睡眠数据 6-24点不刷新，使用缓存
+     
+     - returns:
+     */
+    func getTodaySleepRingData() -> (Double, Double, Double) {
+        
+        let nowDate = NSDate()
+        
+        if (nowDate - nowDate.gregorian.beginningOfDay.date).totalMinutes > 360 {
+            
+            guard let refreshDate = NSUserDefaults.standardUserDefaults().objectForKey(CavyDefine.isRefreshSleepRingKey) as? NSDate else {
+                return setSleepRingCache(nowDate)
+            }
+            
+            guard (refreshDate - nowDate.gregorian.beginningOfDay.date).totalMinutes >= 0 else {
+                return setSleepRingCache(nowDate)
+            }
+            
+            guard let sleepArr = NSUserDefaults.standardUserDefaults().objectForKey(CavyDefine.sleepRingCacheKey) as? NSArray else {
+                return setSleepRingCache(nowDate)
+            }
+            
+            return (sleepArr[0].doubleValue, sleepArr[1].doubleValue, sleepArr[2].doubleValue)
+            
+        } else {
+            
+            NSUserDefaults.standardUserDefaults().setObject(NSDate(), forKey: CavyDefine.isRefreshSleepRingKey)
+        
+            return setSleepRingCache(nowDate)
+        
+        }
+        
+    }
+    
+    /**
+     设置睡眠圆环数据缓存
+     
+     - parameter nowDate:
+     
+     - returns:
+     */
+    func setSleepRingCache(nowDate: NSDate) -> (Double, Double, Double) {
+        
+        NSUserDefaults.standardUserDefaults().setObject(NSDate(), forKey: CavyDefine.isRefreshSleepRingKey)
+        
+        let newBeginTime = (nowDate.gregorian.beginningOfDay - 3.hour).date
+        let newEndTime = (newBeginTime.gregorian + 12.hour).date
+        
+        let sleepData = querySleepInfo(newBeginTime, endTime: newEndTime)
+        
+        let sleepDataArr = NSArray.init(array: [NSNumber.init(double: sleepData.0), NSNumber.init(double: sleepData.1), NSNumber.init(double: sleepData.2)])
+        
+        NSUserDefaults.standardUserDefaults().setObject(sleepDataArr, forKey: CavyDefine.sleepRingCacheKey)
+        return sleepData
+    }
+    
     
 }
 

@@ -71,7 +71,7 @@ class HomeUpperView: UIView, UserInfoRealmOperateDelegate, ChartsRealmProtocol, 
             switch change {
             case .Update(_, deletions: _, insertions: _, modifications: _):
                 self.configStepValue()
-                NSNotificationCenter.defaultCenter().postNotificationName(NumberFollowUpper.FollowUpperStep.rawValue, object: nil)
+                
                 
             default:
                 break
@@ -86,7 +86,7 @@ class HomeUpperView: UIView, UserInfoRealmOperateDelegate, ChartsRealmProtocol, 
             case .Update(_, deletions: _, insertions: _, modifications: _):
                 self.configSleepValue()
                 self.configSleepWebRealm()
-                NSNotificationCenter.defaultCenter().postNotificationName(NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
+                
                 
             default:
                 break
@@ -105,7 +105,6 @@ class HomeUpperView: UIView, UserInfoRealmOperateDelegate, ChartsRealmProtocol, 
             switch change {
             case .Update(_, deletions: _, insertions: _, modifications: _):
                 self.configSleepValue()
-                NSNotificationCenter.defaultCenter().postNotificationName(NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
                 
             default:
                 break
@@ -201,6 +200,7 @@ class HomeUpperView: UIView, UserInfoRealmOperateDelegate, ChartsRealmProtocol, 
         let sleepCurrentNumber = (resultSeelp!.deepSleep + resultSeelp!.lightSleep) ?? 0  //Int(resultSeelp.0)
 
         sleepView.ringWithStyle(sleepTarget, currentNumber: sleepCurrentNumber)
+        NSNotificationCenter.defaultCenter().postNotificationName(NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
         
     }
     
@@ -223,6 +223,7 @@ class HomeUpperView: UIView, UserInfoRealmOperateDelegate, ChartsRealmProtocol, 
          let stepCurrentNumber = resultStep.totalStep
         
         stepView.ringWithStyle(stepTargetNumber, currentNumber: stepCurrentNumber)
+        NSNotificationCenter.defaultCenter().postNotificationName(NumberFollowUpper.FollowUpperStep.rawValue, object: nil)
         
     }
     

@@ -36,7 +36,7 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
         // 接收通知
         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(changeStepNumber), name: NumberFollowUpper.FollowUpperStep.rawValue, object: nil)
         
-        //        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(changeSleepNumber), name: NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(changeSleepNumber), name: NumberFollowUpper.FollowUpperSleep.rawValue, object: nil)
     }
     
     deinit {
@@ -55,6 +55,13 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
         initNotificationHomeList()
         initNotificationStep()
         initNotificationSleep()
+        
+        if NSDate(fromString: timeString, format: "yyyy.M.d")?.gregorian.isToday != true {
+            self.datasViewModels = self.queryRealmGetViewModelLists(self.queryHomeData(timeString))
+            self.tableView.reloadData()
+        }
+        
+        
         
     }
     
@@ -299,14 +306,6 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
         //            }
         //            
         //        }
-        //        // 成就列表
-        //        if listRealm.achieveList.count > 0 {
-        //            
-        //            for list in listRealm.achieveList {
-        //                
-        //                listVM.append(HomeListAchiveViewModel(medalIndex: list.achieve))
-        //            }
-        //        }
         //        // 健康列表
         //        if listRealm.healthList.count > 0 {
         //            
@@ -327,9 +326,9 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
             fatalError("时间格式不正确\(timeString)")
         }
         
-        let endDate = curDate.gregorian.isToday ? NSDate() : (curDate.gregorian.beginningOfDay + 24.hour).date
-        
-        self.datasViewModels[0] = HomeListStepViewModel(stepNumber: self.queryStepNumber(curDate, endTime: endDate, timeBucket: TimeBucketStyle.Day).totalStep)
+        guard curDate.gregorian.isToday else { return }
+                
+        self.datasViewModels[0] = HomeListStepViewModel(stepNumber: self.queryStepNumber(curDate, endTime: NSDate(), timeBucket: TimeBucketStyle.Day).totalStep)
         
         self.tableView.reloadData()
     }
@@ -337,18 +336,18 @@ class HomeDateTimeLineCell: UICollectionViewCell, UITableViewDelegate, UITableVi
     /**
      接受通知更新睡眠值
      */
-    //    func changeSleepNumber() {
-    //        
-    //        guard let curDate = NSDate(fromString: timeString, format: "yyyy.M.d") else {
-    //            fatalError("时间格式不正确\(timeString)")
-    //        }
-    //        
-    //        let endDate = curDate.gregorian.isToday ? NSDate() : (curDate.gregorian.beginningOfDay + 24.hour).date
-    //
-    //        self.datasViewModels[1] = HomeListSleepViewModel(sleepTime: Int(self.querySleepInfoDay(curDate, endTime: endDate).0))
-    //        self.tableView.reloadData()
-    //        
-    //    }
+    func changeSleepNumber() {
+        
+        guard let curDate = NSDate(fromString: timeString, format: "yyyy.M.d") else {
+            fatalError("时间格式不正确\(timeString)")
+        }
+        
+        guard curDate.gregorian.isToday else { return }
+
+        self.datasViewModels[1] = HomeListSleepViewModel(sleepTime: Int(self.queryTodaySleepInfo().0))
+        self.tableView.reloadData()
+        
+    }
     
 }
 
