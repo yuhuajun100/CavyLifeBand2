@@ -131,12 +131,6 @@ extension ChartsRealmProtocol {
      */
     func isNeedUpdateStepData() -> Bool {
         
-        let list = realm.objects(NChartStepDataRealm)
-        
-        if list.count == 0 {
-            return true
-        }
-        
         let personalList = realm.objects(NChartStepDataRealm).filter("userId = '\(userId)'")
         
         if personalList.count == 0 {
