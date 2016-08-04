@@ -532,16 +532,57 @@ extension ChartsRealmProtocol {
         
         var minustsCount   = 0 // 睡眠计数
         var longSleepCount = 0 // 深睡时长
-        var continuousZeroCoun = 0 // 记录连续的0
-//        var zeroCoun = 0   // 0 的个数
+        var defaltZeroCoun = 0  // 在无条件下判断连续的0
         
-        let sleepDatas = transformSleepData(beginTime, endTime: endTime)
-        let stepDatas = transformStepData(beginTime, endTime: endTime)
+        
+        let startTime = NSDate(timeInterval: -20*60, sinceDate: beginTime)
+        let finishTime = NSDate(timeInterval: 10*60, sinceDate: endTime)
+        
+        let sleepDatas = transformSleepData(startTime, endTime: finishTime)
+        let stepDatas = transformStepData(startTime, endTime: finishTime)
         
     
         if stepDatas.isEmpty || sleepDatas.isEmpty {
             return (0, 0)
         }
+        
+        var  zeroCoun = 0  //计算睡眠条件之外的连续的超过9个0 的计数count
+        
+        for timeIndex in 0..<sleepDatas.count {
+            
+            let stepItem = stepDatas[timeIndex]
+            let tiltsItem = sleepDatas[timeIndex]
+            
+            if stepItem == 0 && tiltsItem == 0 {
+                
+                zeroCoun += 1
+                
+            }else
+                
+            {
+                if zeroCoun >= noSleepTime
+                    
+                {
+                    
+                  defaltZeroCoun += zeroCoun
+                    
+                }
+                
+               zeroCoun = 0
+            }
+            
+        }
+        
+        
+        if zeroCoun >= noSleepTime
+            
+        {
+            
+            defaltZeroCoun += zeroCoun
+            
+        }
+        
+        
         
         for timeIndex in 0..<sleepDatas.count {
             
@@ -566,49 +607,25 @@ extension ChartsRealmProtocol {
             // 条件1.2：当前10分钟tilt<15
             // 条件1.3：当前10分钟step<30
             
+      
+    
+            /**
+             *  在睡眠条件下
+             */
             if tiltsTotal < 40 &&  tiltsItem < 15 && stepItem < 30 {
                 
-                minustsCount += 1
+                minustsCount += 1 //记录睡眠
                 
                 // 1.4. 记录当中的0
                 
                 if stepItem == 0 && tiltsItem == 0 {
                     
-                    longSleepCount += 1
-                    continuousZeroCoun += 1
-                    
-                
-                }else
-                {
-                    // 2.
-                    // 如果longSleepCount 大于 noSleepTime  往后能找到非0 值 这可以去掉该部分无效数据
-                    // 如果 在 往后找不到非0 的数值 这判断这个循环结束的时候 有多少0
-                        
-                        // 4.无效睡眠状态 去掉超过连续的>=12 的0
-                        if continuousZeroCoun >= noSleepTime
-                            
-                        {
-                            
-                            minustsCount -= continuousZeroCoun
-                            longSleepCount -= continuousZeroCoun
-                            continuousZeroCoun = 0
-                            
-                        }
+                    longSleepCount += 1 //记录深睡
+   
                 }
-                
+
             }
-            
-        }
-        
-        //3 遍历结束之后判断同时为0 的个数 如果大于 noSleepTime 则全部截去
-        
-        if continuousZeroCoun >= noSleepTime
-            
-        {
-            
-            minustsCount -= continuousZeroCoun
-            longSleepCount -= continuousZeroCoun
-            continuousZeroCoun = 0
+
             
         }
         
@@ -621,7 +638,7 @@ extension ChartsRealmProtocol {
         
         Log.info("总共睡眠\(minustsCount)=====深睡个数\(longSleepCount)")
         
-        return (minustsCount, longSleepCount)
+        return (minustsCount - defaltZeroCoun , longSleepCount - defaltZeroCoun)
     }
     
     
@@ -638,7 +655,7 @@ extension ChartsRealmProtocol {
      */
     private func transformSleepData(beginTime: NSDate, endTime: NSDate) -> [Int] {
         
-        let realmSleepData = realm.objects(ChartSleepDataRealm).filter("userId == '\(userId)' AND time > %@ AND time < %@", beginTime, endTime)
+        let realmSleepData = realm.objects(ChartSleepDataRealm).filter("userId == '\(userId)' AND time => %@ AND time <= %@", beginTime, endTime)
         
         if realmSleepData.isEmpty {
             return []
@@ -676,7 +693,7 @@ extension ChartsRealmProtocol {
      */
     private func transformStepData(beginTime: NSDate, endTime: NSDate) -> [Int] {
         
-        let realmStepData = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND time > %@ AND time < %@", beginTime, endTime)
+        let realmStepData = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND time => %@ AND time <= %@", beginTime, endTime)
         
         if realmStepData.count == 0 {
             return []
@@ -1055,30 +1072,30 @@ extension ChartsRealmProtocol {
     func getTodaySleepRingData() -> (Double, Double, Double) {
         
         let nowDate = NSDate()
-        
-        if (nowDate - nowDate.gregorian.beginningOfDay.date).totalMinutes > 360 {
-            
-            guard let refreshDate = NSUserDefaults.standardUserDefaults().objectForKey(CavyDefine.isRefreshSleepRingKey) as? NSDate else {
-                return setSleepRingCache(nowDate)
-            }
-            
-            guard (refreshDate - nowDate.gregorian.beginningOfDay.date).totalMinutes >= 0 else {
-                return setSleepRingCache(nowDate)
-            }
-            
-            guard let sleepArr = NSUserDefaults.standardUserDefaults().objectForKey(CavyDefine.sleepRingCacheKey) as? NSArray else {
-                return setSleepRingCache(nowDate)
-            }
-            
-            return (sleepArr[0].doubleValue, sleepArr[1].doubleValue, sleepArr[2].doubleValue)
-            
-        } else {
-            
-            NSUserDefaults.standardUserDefaults().setObject(NSDate(), forKey: CavyDefine.isRefreshSleepRingKey)
+//
+//        if (nowDate - nowDate.gregorian.beginningOfDay.date).totalMinutes > 360 {
+//            
+//            guard let refreshDate = NSUserDefaults.standardUserDefaults().objectForKey(CavyDefine.isRefreshSleepRingKey) as? NSDate else {
+//                return setSleepRingCache(nowDate)
+//            }
+//            
+//            guard (refreshDate - nowDate.gregorian.beginningOfDay.date).totalMinutes >= 0 else {
+//                return setSleepRingCache(nowDate)
+//            }
+//            
+//            guard let sleepArr = NSUserDefaults.standardUserDefaults().objectForKey(CavyDefine.sleepRingCacheKey) as? NSArray else {
+//                return setSleepRingCache(nowDate)
+//            }
+//            
+//            return (sleepArr[0].doubleValue, sleepArr[1].doubleValue, sleepArr[2].doubleValue)
+//            
+//        } else {
+//            
+//            NSUserDefaults.standardUserDefaults().setObject(NSDate(), forKey: CavyDefine.isRefreshSleepRingKey)
         
             return setSleepRingCache(nowDate)
         
-        }
+//        }
         
     }
     
