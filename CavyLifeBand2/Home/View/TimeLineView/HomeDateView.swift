@@ -50,6 +50,32 @@ class HomeDateView: UIView, UICollectionViewDataSource, UICollectionViewDelegate
     }
     
     
+    func configureDate() {
+        
+        let dateFormatter = NSDateFormatter()
+        
+        dateFormatter.dateFromString("yyyy.M.d")
+        
+        guard dateArray.count > 0 else {
+            
+            self.dateArray = self.queryTimeBucketFromFirstDay()!
+            self.collectionView!.reloadData()
+            self.collectionView!.setContentOffset(CGPointMake(CGFloat(self.dateArray.count - 1) * self.labelWidth, 0), animated: false)
+            
+            return
+        
+        }
+        
+        if dateFormatter.dateFromString(dateArray.last ?? "") != NSDate() {
+            
+            self.dateArray = self.queryTimeBucketFromFirstDay()!
+            self.collectionView!.reloadData()
+            self.collectionView!.setContentOffset(CGPointMake(CGFloat(self.dateArray.count - 1) * self.labelWidth, 0), animated: false)
+        
+        }
+        
+    }
+    
     /**
      数据库下载完更新视图监控
      */

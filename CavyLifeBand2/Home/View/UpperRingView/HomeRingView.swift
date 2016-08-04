@@ -34,6 +34,7 @@ class HomeRingView: UIView {
     var ringWidth: CGFloat = 0
     var ringColor: UIColor = UIColor.clearColor()
     
+    var ringLayer: CAShapeLayer?
     
     /**
      默认设置 布局 和 环形配置
@@ -156,6 +157,21 @@ class HomeRingView: UIView {
             lineLayer.path = linePath.CGPath
             self.layer.addSublayer(lineLayer)
         }
+        
+        // 贝塞尔曲线
+        let startA = CGFloat(M_PI)
+        let endA = startA
+
+        //环形
+        ringLayer = CAShapeLayer(layer: layer)
+        ringLayer?.frame = self.bounds
+        ringLayer?.fillColor = UIColor.clearColor().CGColor
+        ringLayer?.strokeColor = ringColor.CGColor
+        ringLayer?.lineWidth = ringWidth
+        ringLayer?.lineCap = kCALineCapRound
+        let path = UIBezierPath(arcCenter: center, radius: redius, startAngle: startA, endAngle: endA, clockwise: false)
+        ringLayer?.path = path.CGPath
+        self.layer.addSublayer(ringLayer!)
 
     }
     
@@ -188,31 +204,20 @@ class HomeRingView: UIView {
         
         if percent == 0 {
             
-            return
-        }else if percent > 0 {
-            
-//            let lineBeginPath = UIBezierPath(arcCenter: center, radius: redius, startAngle: startA, endAngle: middleA, clockwise: false)
-//
-//            lineBeginLayer.path = lineBeginPath.CGPath
-//            self.layer.addSublayer(lineBeginLayer)
-            
-        } else if percent >= 100 {
-            
-//            let lineBeginPath = UIBezierPath(arcCenter: center, radius: redius, startAngle: startA, endAngle: CGFloat(M_PI - M_PI * 2), clockwise: false)
-//            lineBeginLayer.path = lineBeginPath.CGPath
-//            self.layer.addSublayer(lineBeginLayer)
+            endA = startA
+        
         }
         
         //环形
-        let ringLayer = CAShapeLayer(layer: layer)
-        ringLayer.frame = self.bounds
-        ringLayer.fillColor = UIColor.clearColor().CGColor
-        ringLayer.strokeColor = ringColor.CGColor
-        ringLayer.lineWidth = ringWidth
-        ringLayer.lineCap = kCALineCapRound
+//        let ringLayer = CAShapeLayer(layer: layer)
+        ringLayer?.frame = self.bounds
+        ringLayer?.fillColor = UIColor.clearColor().CGColor
+        ringLayer?.strokeColor = ringColor.CGColor
+        ringLayer?.lineWidth = ringWidth
+        ringLayer?.lineCap = kCALineCapRound
         let path = UIBezierPath(arcCenter: center, radius: redius, startAngle: startA, endAngle: endA, clockwise: false)
-        ringLayer.path = path.CGPath
-        self.layer.addSublayer(ringLayer)
+        ringLayer?.path = path.CGPath
+//        self.layer.addSublayer(ringLayer)
 
     }
     

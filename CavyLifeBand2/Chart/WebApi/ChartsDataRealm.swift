@@ -14,7 +14,7 @@ import Alamofire
 import Realm
 
 /// 长时间没有数据，12 = 2小时， 12 * 10分钟
-let noSleepTime = 12
+let noSleepTime = 9
 
 
 // MARK: Step
@@ -22,6 +22,7 @@ class ChartStepDataRealm: Object {
     
     dynamic var userId             = ""
     dynamic var time: NSDate       = NSDate()
+    dynamic var timeStr: String    = NSDate().toString(format: "yyyy-MM-dd HH:mm:ss")
     dynamic var step               = 0
     dynamic var kilometer: CGFloat = 0
     dynamic var syncState          = ChartBandDataSyncState.UnSync.rawValue
@@ -32,11 +33,14 @@ class ChartStepDataRealm: Object {
         
         self.userId    = userId
         self.time      = time
+        self.timeStr   = time.toString(format: "yyyy-MM-dd HH:mm:ss")
         self.step      = step
         self.kilometer = CGFloat(self.step) * 0.0006// 相当于一部等于0.6米 公里数 = 步数 * 0.6 / 1000
     }
     
-    
+    override class func primaryKey() -> String? {
+        return "timeStr"
+    }
     
     
 }
@@ -46,6 +50,7 @@ class ChartSleepDataRealm: Object {
     
     dynamic var userId       = ""
     dynamic var time: NSDate = NSDate()
+    dynamic var timeStr: String    = NSDate().toString(format: "yyyy-MM-dd HH:mm:ss")
     dynamic var tilts        = 0
     dynamic var syncState    = ChartBandDataSyncState.UnSync.rawValue
     
@@ -55,8 +60,13 @@ class ChartSleepDataRealm: Object {
         
         self.userId = userId
         self.time   = time
+        self.timeStr   = time.toString(format: "yyyy-MM-dd HH:mm:ss")
         self.tilts  = tilts
         
+    }
+    
+    override class func primaryKey() -> String? {
+        return "timeStr"
     }
     
     
@@ -131,12 +141,6 @@ extension ChartsRealmProtocol {
      */
     func isNeedUpdateStepData() -> Bool {
         
-        let list = realm.objects(NChartStepDataRealm)
-        
-        if list.count == 0 {
-            return true
-        }
-        
         let personalList = realm.objects(NChartStepDataRealm).filter("userId = '\(userId)'")
         
         if personalList.count == 0 {
@@ -165,7 +169,7 @@ extension ChartsRealmProtocol {
             
             try realm.write {
                 
-                realm.add(chartsInfo, update: false)
+                realm.add(chartsInfo, update: true)
             }
             
         } catch {
@@ -199,21 +203,19 @@ extension ChartsRealmProtocol {
                 
                 return returnHourChartsArray(dataInfo, stepData: nil)
                 
-            }else
-                
-            {
+            } else {
                 
                 return returnHourChartsArray(nil, stepData: serverData)
             }
             
-            
-            
         case .Week, .Month:
             
+//            if endTime.gregorian.isToday {
+            let nowDate = NSDate()
             
-            if endTime.gregorian.isToday {
-                
-                let dataInfo = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND time > %@ AND time < %@", beginTime.timeStringChangeToNSDate(.Day).0, endTime.timeStringChangeToNSDate(.Day).1)
+            if (nowDate - beginTime).totalMinutes >= 0 && (nowDate - endTime).totalMinutes <= 0 {
+            
+                let dataInfo = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND time >= %@ AND time <= %@", nowDate.gregorian.beginningOfDay.date, (nowDate.gregorian.beginningOfDay + 1.day - 1.seconds).date)
                 
                 return returnDayChartsArray(beginTime, endTime: endTime, dataInfo: dataInfo, stepData: serverData)
                 
@@ -461,7 +463,7 @@ extension ChartsRealmProtocol {
             
             try realm.write {
                 
-                realm.add(chartsInfo, update: false)
+                realm.add(chartsInfo, update: true)
             }
             
         } catch {
@@ -727,18 +729,18 @@ extension ChartsRealmProtocol {
     func queryTodaySleepInfo() -> (Double, Double, Double) {
         
         
-        let nowTime = NSDate().gregorian.date
-        let newBeginTime = (NSDate().gregorian.beginningOfDay - 3.hour).date
-        var endDate = (newBeginTime.gregorian + 12.hour).date
+//        let nowTime = NSDate().gregorian.date
+//        let newBeginTime = (NSDate().gregorian.beginningOfDay - 3.hour).date
+//        var endDate = (newBeginTime.gregorian + 12.hour).date
+//        
+//        //当前的时间
+//        if nowTime.compare(endDate) == .OrderedAscending {
+//            
+//            endDate = nowTime
+//            
+//        }
         
-        //当前的时间
-        if nowTime.compare(endDate) == .OrderedAscending {
-            
-            endDate = nowTime
-            
-        }
-        
-        return querySleepInfo(newBeginTime, endTime: endDate)
+        return getTodaySleepRingData()
         
     }
     
@@ -812,14 +814,10 @@ extension ChartsRealmProtocol {
 //            guard NetworkReachabilityManager(host: "www.baidu.com")?.isReachable == false else {
 //                return reslutData
 //            }
-            
+//            
             // 没网显示手环数据库的数据
             
-            // 从前天的晚上6点开始算起
-            let newBeginTime = (nowDate.gregorian.beginningOfDay - 3.hour).date
-            let newEndTime = (newBeginTime.gregorian + 12.hour).date
-            
-            reslutData[(nowDate - beginTime).totalDays] = querySleepInfo(newBeginTime, endTime: newEndTime)
+            reslutData[(nowDate - beginTime).totalDays] = getTodaySleepRingData()
             
             return reslutData
             
@@ -875,26 +873,80 @@ extension ChartsRealmProtocol {
             return ([], NSDate(), NSDate())
         }
         
-        let startTime = realmSleepData[0].time.gregorian.beginningOfDay.date
+        var sleepDate = [NSDate]()
+        var stepDate = [NSDate]()
         
-//        let endTime = realmStepData.last!.time.gregorian.beginningOfDay.date
-//        
-//        if (endTime - startTime).totalDays > 9 {
-//        
-//            let realStart = (realmStepData.last!.time.gregorian - 9.day).date
-//            
-//            realmStepData = realm.objects(ChartStepDataRealm).filter("userId == '\(userId)' AND time >= %@ AND time <= %@", realStart, realmStepData.last!.time)
-//            
-//        }
+        var sleepData = [ChartSleepDataRealm]()
+        var stepData = [ChartStepDataRealm]()
+        
+        // 数据去重
+        for i in 0..<realmSleepData.count {
+            
+            if !sleepDate.contains(realmSleepData[i].time) {
+                
+                sleepDate.append(realmSleepData[i].time)
+                sleepData.append(realmSleepData[i])
+                
+            }
+            
+        }
+        
+        for i in 0..<realmStepData.count {
+            
+            if !stepDate.contains(realmStepData[i].time) {
+                
+                stepDate.append(realmStepData[i].time)
+                stepData.append(realmStepData[i])
+                
+            }
+            
+        }
+        
+        //数据数量不一样 剪成一样
+        if stepData.count != sleepData.count {
+        
+            if stepData.count > sleepData.count {
+                
+                for _ in 0..<stepData.count - sleepData.count {
+                    
+                    stepData.removeAtIndex(0)
+                
+                }
+                
+            } else {
+                
+                for _ in 0..<sleepData.count - stepData.count {
+                    
+                    sleepData.removeAtIndex(0)
+                    
+                }
+            }
+            
+        }
+        
+        let maxNum = 10 * 144
+        
+        if stepData.count > maxNum {
+            
+            for _ in 0..<(stepData.count - maxNum) {
+            
+                sleepData.removeAtIndex(0)
+                stepData.removeAtIndex(0)
+                
+            }
+            
+        
+        }
+        
+        let startTime = stepData[0].time.gregorian.beginningOfDay.date
         
         let format = NSDateFormatter()
         
         format.dateFormat = "yyyy-MM-dd"
         
-        var reslutArray: [NSDictionary] = []
+        var reslutArray: [NSDictionary] = [NSDictionary]()
         
-        
-        for i in 0..<realmSleepData.count {
+        for i in 0..<stepData.count {
             
             let tilt = realmSleepData[i].tilts
             let step = realmStepData[i].step
@@ -933,6 +985,7 @@ extension ChartsRealmProtocol {
         setSleepChartBandDataSynced(startDate, endDate: endDate)
         setStepChartBandDataSynced(startDate, endDate: endDate)
         NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
+        Log.info("设置本地数据同步标志")
     }
     
     /**
@@ -993,6 +1046,64 @@ extension ChartsRealmProtocol {
         }
         
     }
+    
+    /**
+     当天睡眠数据 6-24点不刷新，使用缓存
+     
+     - returns:
+     */
+    func getTodaySleepRingData() -> (Double, Double, Double) {
+        
+        let nowDate = NSDate()
+        
+        if (nowDate - nowDate.gregorian.beginningOfDay.date).totalMinutes > 360 {
+            
+            guard let refreshDate = NSUserDefaults.standardUserDefaults().objectForKey(CavyDefine.isRefreshSleepRingKey) as? NSDate else {
+                return setSleepRingCache(nowDate)
+            }
+            
+            guard (refreshDate - nowDate.gregorian.beginningOfDay.date).totalMinutes >= 0 else {
+                return setSleepRingCache(nowDate)
+            }
+            
+            guard let sleepArr = NSUserDefaults.standardUserDefaults().objectForKey(CavyDefine.sleepRingCacheKey) as? NSArray else {
+                return setSleepRingCache(nowDate)
+            }
+            
+            return (sleepArr[0].doubleValue, sleepArr[1].doubleValue, sleepArr[2].doubleValue)
+            
+        } else {
+            
+            NSUserDefaults.standardUserDefaults().setObject(NSDate(), forKey: CavyDefine.isRefreshSleepRingKey)
+        
+            return setSleepRingCache(nowDate)
+        
+        }
+        
+    }
+    
+    /**
+     设置睡眠圆环数据缓存
+     
+     - parameter nowDate:
+     
+     - returns:
+     */
+    func setSleepRingCache(nowDate: NSDate) -> (Double, Double, Double) {
+        
+        NSUserDefaults.standardUserDefaults().setObject(NSDate(), forKey: CavyDefine.isRefreshSleepRingKey)
+        
+        let newBeginTime = (nowDate.gregorian.beginningOfDay - 3.hour).date
+        let newEndTime = (newBeginTime.gregorian + 12.hour).date
+        
+        let sleepData = querySleepInfo(newBeginTime, endTime: newEndTime)
+        
+        let sleepDataArr = NSArray.init(array: [NSNumber.init(double: sleepData.0), NSNumber.init(double: sleepData.1), NSNumber.init(double: sleepData.2)])
+        
+        NSUserDefaults.standardUserDefaults().setObject(sleepDataArr, forKey: CavyDefine.sleepRingCacheKey)
+        return sleepData
+    }
+    
     
 }
 

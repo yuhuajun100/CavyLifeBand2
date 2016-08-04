@@ -272,6 +272,7 @@ extension IntelligentClockViewController: IntelligentClockCellDelegate {
 
     func changeAlarmOpenStatus(index: Int) {
         dataSource?.changeAlarmOpenStatus(index)
+        setAlarmToBand(NSIndexPath.init(forRow: index, inSection: 0))
     }
     
 }

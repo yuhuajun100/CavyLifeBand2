@@ -189,18 +189,24 @@ class LifeBandSyncData {
             }
             
             var i: Int = 0
+            var syncState: Int = 0
             LifeBandBle.shareInterface.installCmd(0xDA) { [unowned self] data in
-                
+                syncState = 1
                 Log.info("同步\(i += 1)")
                 
                 Log.info("syncDataFormBand ---- \(data)")
                 
                 self.saveTiltsAndStepsData(newBeginDate, data: data, reslut: reslut)
                 
-                }
-                .sendMsgToBand("%SYNC=\(dayCmd.rawValue),\(timeCmd)\n")
+            }.sendMsgToBand("%SYNC=\(dayCmd.rawValue),\(timeCmd)\n")
             
             Log.info("Band sync begin ----  \(newBeginDate.toString(format: "yyyy-MM-dd HH:mm:ss"))")
+            
+            NSTimer.runThisAfterDelay(seconds: 8, after: {
+                if syncState == 0 {
+                    NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.StopRefresh.rawValue, object: nil)
+                }
+            })
             
         }
         

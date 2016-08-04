@@ -43,12 +43,12 @@ extension RootViewController: LifeBandBleDelegate {
         
         
         LifeBandBle.shareInterface.bleConnect(BindBandCtrl.bandMacAddress) {
-            
-            self.saveMacAddress()
-            
-            LifeBandCtrl.shareInterface.setDateToBand(NSDate())
-            
-            
+//
+//            self.saveMacAddress()
+//
+//            LifeBandCtrl.shareInterface.setDateToBand(NSDate())
+//            
+//            
 //            let lifeBandModel = LifeBandModelType.LLA.rawValue | LifeBandModelType.Step.rawValue | LifeBandModelType.Tilt.rawValue | LifeBandModelType.Alarm.rawValue | LifeBandModelType.Alert.rawValue
 //            LifeBandCtrl.shareInterface.getLifeBandInfo {
 //                
@@ -60,13 +60,13 @@ extension RootViewController: LifeBandBleDelegate {
 //                BindBandCtrl.fwVersion = $0.fwVersion
 //                
 //            }
-            
-            LifeBandCtrl.shareInterface.installButtonEven()
-            
-            
-//            self.syncDataFormBand()
-            NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
-            
+//            
+//            LifeBandCtrl.shareInterface.installButtonEven()
+//            
+//            
+////            self.syncDataFormBand()
+//            NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
+//            
         }
     }
     

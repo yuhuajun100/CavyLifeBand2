@@ -41,6 +41,35 @@ class HomeTimeLineView: UIView, ChartsRealmProtocol, UICollectionViewDataSource,
         
     }
     
+    /**
+     第二天再从后台打开app，刷新最新一天
+     */
+    func configureDate() {
+        
+        let dateFormatter = NSDateFormatter()
+        
+        dateFormatter.dateFromString("yyyy.M.d")
+        
+        guard dateArray.count > 0 else {
+            
+            self.dateArray = self.queryTimeBucketFromFirstDay()!
+            self.collectionView!.reloadData()
+            self.collectionView!.setContentOffset(CGPointMake(CGFloat(self.dateArray.count - 1) * ez.screenWidth, 0), animated: false)
+            
+            return
+            
+        }
+        
+        if dateFormatter.dateFromString(dateArray.last ?? "") != NSDate() {
+            
+            self.dateArray = self.queryTimeBucketFromFirstDay()!
+            self.collectionView!.reloadData()
+            self.collectionView!.setContentOffset(CGPointMake(CGFloat(self.dateArray.count - 1) * ez.screenWidth, 0), animated: false)
+            
+        }
+        
+    }
+    
     func collectionViewLayOut(frame: CGRect) {
         // 下面的时间轴
         let lineLayout = UICollectionViewFlowLayout()

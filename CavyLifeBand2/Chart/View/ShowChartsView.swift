@@ -55,12 +55,6 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
             self.leftAxis.spaceBottom = 0
             self.leftAxis.spaceTop = 0
         }
-        
-        
-        leftAxis.axisMaxValue = Double(maxValue * 1000)
-        self.setNeedsDisplay()
-        
-//        addClearView()
 
     }
     
@@ -245,23 +239,7 @@ class ShowChartsView: BarChartView, ChartViewDelegate {
 
     }
     
-    /**
-     添加透明视图 来放置显示单条数据
-     */
-    func addClearView() {
-        
-        clearView.backgroundColor = UIColor.lightGrayColor()
-        clearView.alpha = 0.2
-        clearView.userInteractionEnabled = false
-        self.addSubview(clearView)
-        clearView.snp_makeConstraints { make in
-            make.left.right.top.bottom.equalTo(self)
-            
-        }
-
-    }
-    
-    // MARK: -- ChartViewDelegate
+       // MARK: -- ChartViewDelegate
     /**
      点击事件
      */

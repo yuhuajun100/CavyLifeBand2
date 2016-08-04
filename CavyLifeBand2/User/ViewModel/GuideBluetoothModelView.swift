@@ -342,7 +342,7 @@ struct GuideBandSuccess: GuideViewModelPotocols, QueryUserInfoRequestsDelegate, 
             
             UIApplication.sharedApplication().keyWindow?.rootViewController?.dismissViewControllerAnimated(true, completion: nil)
 
-            NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
+//            NSNotificationCenter.defaultCenter().postNotificationName(RefreshStyle.BeginRefresh.rawValue, object: nil)
             
             return
             

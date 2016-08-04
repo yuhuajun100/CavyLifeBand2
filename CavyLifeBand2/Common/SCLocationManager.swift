@@ -116,10 +116,77 @@ class SCLocationManager: NSObject, CLLocationManagerDelegate {
             
         }
         
-        
-        complete?(locations[0].coordinate)
+        translationToBaiduLocation(locations[0].coordinate) { [unowned self] (coordinate) in
+            self.complete?(coordinate)
+        }
         
     }
     
+    /**
+     转换苹果自带定位系统坐标至百度地图坐标
+     
+     - parameter coordinate:
+     - parameter compeleteBolck: 
+     */
+    func translationToBaiduLocation(coordinate: CLLocationCoordinate2D, compeleteBolck: ((CLLocationCoordinate2D) -> Void)){
+        
+        let urlStr = "http://api.map.baidu.com/geoconv/v1/?coords=\(coordinate.longitude),\(coordinate.latitude)&ak=\(CavyDefine.baiduServerKey)&output=json"
+        
+        guard let url = NSURL.init(string: urlStr) else {
+            compeleteBolck(coordinate)
+            return
+        }
+
+        let request = NSURLRequest.init(URL: url)
+        
+        let queue = NSOperationQueue()
+        
+        NSURLConnection.sendAsynchronousRequest(request, queue: queue) { (response, data, error) in
+            
+            guard error == nil else {
+                compeleteBolck(coordinate)
+                return
+            }
+            
+            guard data != nil else {
+                compeleteBolck(coordinate)
+                return
+            }
+            
+            do {
+                
+                let jsonDic = try NSJSONSerialization.JSONObjectWithData(data!, options: .MutableLeaves)
+                
+                guard jsonDic["status"] as? Int == 0 else {
+                    compeleteBolck(coordinate)
+                    return
+                }
+                
+                guard let result = jsonDic["result"] else {
+                    compeleteBolck(coordinate)
+                    return
+                }
+                
+                guard let latitude = result![0]["y"] as? Double else {
+                    compeleteBolck(coordinate)
+                    return
+                }
+                
+                guard let longitude = result![0]["x"] as? Double else {
+                    compeleteBolck(coordinate)
+                    return
+                }
+                
+                
+                let baiduCoordinate = CLLocationCoordinate2DMake(latitude, longitude)
+                compeleteBolck(baiduCoordinate)
+                
+            } catch {
+                compeleteBolck(coordinate)
+            }
+
+        }
+        
+    }
 
 }

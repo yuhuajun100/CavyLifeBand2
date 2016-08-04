@@ -93,7 +93,16 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
         addRefershHeader()
         addNotificationObserver(RefreshStyle.BeginRefresh.rawValue, selector: #selector(beginBandRefersh))
         addNotificationObserver(RefreshStyle.StopRefresh.rawValue, selector: #selector(endBandRefersh))
+        
+        addNotificationObserver(NotificationName.HomeRefreshDate.rawValue, selector: #selector(HomeViewController.configureHomeDate))
  
+    }
+    
+    func configureHomeDate() {
+        dateView.configureDate()
+        timeLineView.configureDate()
+        
+        upperView?.updateUpperViewRing()
     }
 
     /**
@@ -115,24 +124,27 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
     func bandConnect() {
         
         // 手环连接 自动同步数据
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(2 * NSEC_PER_SEC)), dispatch_get_main_queue ()) {
-            // 等待两秒 连接手环的时间
-                        
-            let lifeBandModel = LifeBandModelType.LLA.rawValue | LifeBandModelType.Step.rawValue | LifeBandModelType.Tilt.rawValue | LifeBandModelType.Alarm.rawValue | LifeBandModelType.Alert.rawValue
-            LifeBandCtrl.shareInterface.getLifeBandInfo {
-                
-                // 如果不等于生活手环模式，则重新设置生活手环模式
-                if $0.model & lifeBandModel  != lifeBandModel {
-                    LifeBandCtrl.shareInterface.seLifeBandModel()
-                }
-                
-                BindBandCtrl.fwVersion = $0.fwVersion
-                
+//        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(2 * NSEC_PER_SEC)), dispatch_get_main_queue ()) {
+//            // 等待两秒 连接手环的时间
+//            
+//            LifeBandCtrl.shareInterface.setDateToBand(NSDate())
+//            let lifeBandModel = LifeBandModelType.LLA.rawValue | LifeBandModelType.Step.rawValue | LifeBandModelType.Tilt.rawValue | LifeBandModelType.Alarm.rawValue | LifeBandModelType.Alert.rawValue
+//            LifeBandCtrl.shareInterface.getLifeBandInfo {
+//                
+//                // 如果不等于生活手环模式，则重新设置生活手环模式
+//                if $0.model & lifeBandModel  != lifeBandModel {
+//                    LifeBandCtrl.shareInterface.seLifeBandModel()
+//                }
+//                
+//                BindBandCtrl.fwVersion = $0.fwVersion
+//                
                 self.scrollView.mj_header.beginRefreshing()
-                
-            }
-            
-        }
+//
+//            }
+//            
+//            LifeBandCtrl.shareInterface.installButtonEven()
+//            
+//        }
         rightBtn?.setBackgroundImage(UIImage(asset: .HomeBandMenu), forState: .Normal)
         
     }
@@ -255,7 +267,7 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
         let endDate = NSDate().toString(format: "yyyy-MM-dd HH:mm:ss")
         
         if isNeedUpdateStepData() {
-            
+        
             let personalList = realm.objects(NChartStepDataRealm).filter("userId = '\(userId)'")
             
             if personalList.count != 0 {
@@ -279,7 +291,7 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
             
            
             parseStepDate(startDate, endDate: endDate)
-            
+        
         }
     }
     
@@ -410,10 +422,10 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
      */
     func showStepDetailView(){
         
-        let stepVM = ChartViewModel(title: L10n.ContactsShowInfoStep.string, chartStyle: .StepChart)
-        let chartVC = ChartsViewController()
-        chartVC.configChartsView(stepVM)
-        self.pushVC(chartVC)
+//        let stepVM = ChartViewModel(title: L10n.ContactsShowInfoStep.string, chartStyle: .StepChart)
+//        let chartVC = ChartsViewController()
+//        chartVC.configChartsView(stepVM)
+//        self.pushVC(chartVC)
         
     }
     
@@ -422,10 +434,10 @@ class HomeViewController: UIViewController, BaseViewControllerPresenter, ChartsR
      */
     func showSleepDetailView(){
         
-        let sleepVM = ChartViewModel(title: L10n.ContactsShowInfoSleep.string, chartStyle: .SleepChart)
-        let chartVC = ChartsViewController()
-        chartVC.configChartsView(sleepVM)
-        self.pushVC(chartVC)
+//        let sleepVM = ChartViewModel(title: L10n.ContactsShowInfoSleep.string, chartStyle: .SleepChart)
+//        let chartVC = ChartsViewController()
+//        chartVC.configChartsView(sleepVM)
+//        self.pushVC(chartVC)
         
     }
     
