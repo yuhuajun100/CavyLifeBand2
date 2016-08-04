@@ -22,6 +22,7 @@ class ChartStepDataRealm: Object {
     
     dynamic var userId             = ""
     dynamic var time: NSDate       = NSDate()
+    dynamic var timeStr: String    = NSDate().toString(format: "yyyy-MM-dd HH:mm:ss")
     dynamic var step               = 0
     dynamic var kilometer: CGFloat = 0
     dynamic var syncState          = ChartBandDataSyncState.UnSync.rawValue
@@ -32,11 +33,14 @@ class ChartStepDataRealm: Object {
         
         self.userId    = userId
         self.time      = time
+        self.timeStr   = time.toString(format: "yyyy-MM-dd HH:mm:ss")
         self.step      = step
         self.kilometer = CGFloat(self.step) * 0.0006// 相当于一部等于0.6米 公里数 = 步数 * 0.6 / 1000
     }
     
-    
+    override class func primaryKey() -> String? {
+        return "timeStr"
+    }
     
     
 }
@@ -46,6 +50,7 @@ class ChartSleepDataRealm: Object {
     
     dynamic var userId       = ""
     dynamic var time: NSDate = NSDate()
+    dynamic var timeStr: String    = NSDate().toString(format: "yyyy-MM-dd HH:mm:ss")
     dynamic var tilts        = 0
     dynamic var syncState    = ChartBandDataSyncState.UnSync.rawValue
     
@@ -55,8 +60,13 @@ class ChartSleepDataRealm: Object {
         
         self.userId = userId
         self.time   = time
+        self.timeStr   = time.toString(format: "yyyy-MM-dd HH:mm:ss")
         self.tilts  = tilts
         
+    }
+    
+    override class func primaryKey() -> String? {
+        return "timeStr"
     }
     
     
@@ -159,7 +169,7 @@ extension ChartsRealmProtocol {
             
             try realm.write {
                 
-                realm.add(chartsInfo, update: false)
+                realm.add(chartsInfo, update: true)
             }
             
         } catch {
@@ -453,7 +463,7 @@ extension ChartsRealmProtocol {
             
             try realm.write {
                 
-                realm.add(chartsInfo, update: false)
+                realm.add(chartsInfo, update: true)
             }
             
         } catch {
