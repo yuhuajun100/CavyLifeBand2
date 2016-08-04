@@ -18,7 +18,7 @@ import OHHTTPStubs
 
 var realm: Realm = try! Realm()
 
-let UMAPPKey = "5791832167e58e3ffd001bd0"
+let UMAPPKey = "579abf0be0f55a8e1e00131a"
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, LifeBandBleDelegate {
